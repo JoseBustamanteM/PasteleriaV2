@@ -1,0 +1,149 @@
+<div class="p-4 pb-32">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="volver()" class="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-blue-600 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+    </button>
+    <h1 class="text-2xl font-black text-gray-800">Proveedores</h1>
+  </div>
+
+  <div class="bg-gray-200 p-1 rounded-xl flex mb-6 shadow-inner">
+    <button
+      (click)="pestanaActiva.set('historial')"
+      [class.bg-white]="pestanaActiva() === 'historial'"
+      [class.shadow]="pestanaActiva() === 'historial'"
+      [class.text-gray-800]="pestanaActiva() === 'historial'"
+      class="flex-1 py-2 text-sm font-bold text-gray-500 rounded-lg transition-all">
+      📈 Gastos e Historial
+    </button>
+    <button
+      (click)="pestanaActiva.set('crud')"
+      [class.bg-white]="pestanaActiva() === 'crud'"
+      [class.shadow]="pestanaActiva() === 'crud'"
+      [class.text-gray-800]="pestanaActiva() === 'crud'"
+      class="flex-1 py-2 text-sm font-bold text-gray-500 rounded-lg transition-all">
+      ⚙️ Directorio
+    </button>
+  </div>
+
+  @if (pestanaActiva() === 'historial') {
+    <div class="animate-fade-in">
+
+      @if (cargando()) {
+        <p class="text-center text-gray-400 py-4 text-sm animate-pulse">Calculando pagos...</p>
+      } @else {
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+          @for (prov of proveedoresVisualizados(); track prov.id) {
+            <button (click)="proveedorSeleccionado.set(prov)"
+              [class.bg-blue-600]="proveedorSeleccionado()?.id === prov.id" [class.text-white]="proveedorSeleccionado()?.id === prov.id"
+              [class.bg-white]="proveedorSeleccionado()?.id !== prov.id" [class.text-gray-600]="proveedorSeleccionado()?.id !== prov.id"
+              class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 shadow-sm transition-all flex items-center gap-1">
+              🚚 <span>{{ prov.nombre }}</span>
+            </button>
+          }
+        </div>
+
+        @if (proveedorSeleccionado()) {
+          <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-5 rounded-2xl shadow-lg text-white mb-6">
+            <p class="text-[10px] uppercase font-bold opacity-80 mb-1">Total Pagado a este proveedor</p>
+            <h3 class="text-3xl font-black">{{ proveedorSeleccionado().totalPagado | currency:'CLP':'symbol-narrow':'1.0-0' }}</h3>
+            <p class="text-xs mt-2 opacity-90">{{ proveedorSeleccionado().cantidadCompras }} compras registradas en total.</p>
+          </div>
+
+          <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 ml-1">Historial de Compras</h3>
+
+          @if (proveedorSeleccionado().comprasRealizadas.length === 0) {
+            <div class="text-center py-8 bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <span class="text-3xl">🧾</span>
+              <p class="text-gray-400 text-sm mt-2">Aún no le has comprado nada.</p>
+            </div>
+          } @else {
+            <div class="space-y-2 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+              @for (compra of proveedorSeleccionado().comprasRealizadas; track compra.id) {
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-blue-100 text-blue-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-sm">
+                    📦
+                  </div>
+
+                  <div class="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center ml-2 md:ml-0">
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">{{ compra.fecha | date:'dd MMM yyyy' }}</p>
+                      <p class="font-bold text-gray-800 text-sm">N° {{ compra.id.substring(0,6) | uppercase }}</p>
+                    </div>
+                    <p class="font-black text-red-600">{{ compra.total_pagado | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        } @else {
+          <p class="text-center text-gray-400 py-10 text-sm">Selecciona un proveedor arriba.</p>
+        }
+      }
+    </div>
+  }
+
+  @if (pestanaActiva() === 'crud') {
+    <div class="animate-fade-in">
+
+      <div class="flex justify-between items-center mb-4">
+        <div class="relative shadow-sm rounded-xl flex-1 mr-3">
+          <input type="text" [ngModel]="textoBusqueda()" (ngModelChange)="textoBusqueda.set($event)" placeholder="Buscar..." class="w-full pl-3 p-2 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-blue-600">
+        </div>
+        <button (click)="abrirModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-blue-200 active:scale-95 transition-all whitespace-nowrap">
+          + Nuevo
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        @for (prov of proveedoresVisualizados(); track prov.id) {
+          <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="flex-1 min-w-0 pr-3">
+              <h3 class="font-bold text-gray-800 text-sm leading-tight truncate">{{ prov.nombre }}</h3>
+              @if (prov.telefono || prov.direccion) {
+                <p class="text-[10px] text-gray-400 truncate mt-0.5">{{ prov.telefono }} <span *ngIf="prov.telefono && prov.direccion">•</span> {{ prov.direccion }}</p>
+              }
+            </div>
+            <button (click)="abrirModal(prov)" class="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 rounded-lg transition-colors shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.89l13.416-13.416zM12 14.75l5.25-5.25" /></svg>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+@if (mostrarModal()) {
+  <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+      <h2 class="text-xl font-black text-gray-800 mb-4">{{ proveedorActual().id ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nombre / Empresa</label>
+          <input type="text" [(ngModel)]="proveedorActual().nombre" placeholder="Ej: Molinos del Sur" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-blue-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Teléfono</label>
+          <input type="text" [(ngModel)]="proveedorActual().telefono" placeholder="+56 9..." class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-blue-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Dirección (Opcional)</label>
+          <input type="text" [(ngModel)]="proveedorActual().direccion" placeholder="Calle 123..." class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-blue-600 outline-none">
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        @if (proveedorActual().id) {
+          <button (click)="desactivarProveedor()" class="p-3 text-orange-500 bg-orange-50 rounded-xl hover:bg-orange-100" title="Desactivar proveedor">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+          </button>
+        }
+        <button (click)="cerrarModal()" class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl">Cancelar</button>
+        <button (click)="guardarProveedor()" class="flex-1 py-3 font-bold text-white bg-blue-600 rounded-xl shadow-lg shadow-blue-200">Guardar</button>
+      </div>
+    </div>
+  </div>
+}

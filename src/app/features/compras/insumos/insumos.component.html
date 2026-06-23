@@ -1,0 +1,71 @@
+<div class="p-4 pb-32">
+
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <button (click)="volver()" class="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-orange-500 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+      </button>
+      <h1 class="text-2xl font-black text-gray-800">Insumos</h1>
+    </div>
+    <button (click)="abrirModal()" class="bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-orange-200 active:scale-95 transition-all">
+      + Nuevo
+    </button>
+  </div>
+
+  <div class="mb-6 relative shadow-sm rounded-xl">
+    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+    </span>
+    <input type="text" [ngModel]="textoBusqueda()" (ngModelChange)="textoBusqueda.set($event)" placeholder="Buscar materia prima..." class="w-full pl-10 p-3 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all">
+  </div>
+
+  <div class="animate-fade-in">
+    @if (cargando()) {
+      <p class="text-center text-gray-400 py-4 text-sm animate-pulse">Cargando inventario...</p>
+    } @else if (insumosVisualizados().length === 0) {
+      <div class="text-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <span class="text-4xl">🌾</span>
+        <p class="text-gray-500 mt-2 font-medium">No hay insumos registrados.</p>
+      </div>
+    } @else {
+      <div class="space-y-3">
+        @for (ins of insumosVisualizados(); track ins.id) {
+          <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="text-3xl">{{ ins.icono }}</div>
+              <h3 class="font-bold text-gray-800">{{ ins.nombre }}</h3>
+            </div>
+            <button (click)="abrirModal(ins)" class="p-2 text-gray-400 hover:text-orange-500 bg-gray-50 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.89l13.416-13.416zM12 14.75l5.25-5.25" /></svg>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+@if (mostrarModal()) {
+  <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+      <h2 class="text-xl font-black text-gray-800 mb-4">{{ insumoActual().id ? 'Editar Insumo' : 'Nuevo Insumo' }}</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Ícono (Emoji)</label>
+          <input type="text" [(ngModel)]="insumoActual().icono" class="w-full text-2xl p-2 border border-gray-200 rounded-xl text-center bg-gray-50 focus:border-orange-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nombre</label>
+          <input type="text" [(ngModel)]="insumoActual().nombre" placeholder="Ej: Harina de Trigo" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-orange-500 outline-none">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        @if (insumoActual().id) {
+          <button (click)="eliminarInsumo()" class="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg></button>
+        }
+        <button (click)="cerrarModal()" class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl">Cancelar</button>
+        <button (click)="guardarInsumo()" class="flex-1 py-3 font-bold text-white bg-orange-500 rounded-xl shadow-lg shadow-orange-200">Guardar</button>
+      </div>
+    </div>
+  </div>
+}

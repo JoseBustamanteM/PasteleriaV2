@@ -1,0 +1,190 @@
+<div class="p-4 pb-32">
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="volver()" class="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-cereza">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+    </button>
+    <h1 class="text-2xl font-black text-gray-800">Catálogo</h1>
+  </div>
+
+  <div class="bg-gray-200 p-1 rounded-xl flex mb-6 shadow-inner">
+    <button
+      (click)="pestanaActiva.set('ranking')"
+      [class.bg-white]="pestanaActiva() === 'ranking'"
+      [class.shadow]="pestanaActiva() === 'ranking'"
+      [class.text-gray-800]="pestanaActiva() === 'ranking'"
+      class="flex-1 py-2 text-sm font-bold text-gray-500 rounded-lg transition-all">
+      📈 Ranking
+    </button>
+    <button
+      (click)="pestanaActiva.set('crud')"
+      [class.bg-white]="pestanaActiva() === 'crud'"
+      [class.shadow]="pestanaActiva() === 'crud'"
+      [class.text-gray-800]="pestanaActiva() === 'crud'"
+      class="flex-1 py-2 text-sm font-bold text-gray-500 rounded-lg transition-all">
+      ⚙️ Administración
+    </button>
+  </div>
+
+ @if (pestanaActiva() === 'ranking') {
+    <div class="animate-fade-in">
+
+      <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-4">
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Mes</label>
+            <select [ngModel]="mesSeleccionado()" (ngModelChange)="mesSeleccionado.set($event); cargarRanking()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-cereza">
+              @for(m of meses; track m.valor) { <option [value]="m.valor">{{ m.nombre }}</option> }
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Año</label>
+            <select [ngModel]="anioSeleccionado()" (ngModelChange)="anioSeleccionado.set($event); cargarRanking()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-cereza">
+              @for(a of anios; track a) { <option [value]="a">{{ a }}</option> }
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-2 bg-gray-100 p-1 rounded-xl">
+          <button (click)="ordenarPor.set('cantidad'); cargarRanking()"
+            [class.bg-white]="ordenarPor() === 'cantidad'" [class.shadow-sm]="ordenarPor() === 'cantidad'" [class.text-cereza]="ordenarPor() === 'cantidad'"
+            class="flex-1 py-1.5 text-xs font-bold text-gray-500 rounded-lg transition-all">
+            📊 Por Unidades
+          </button>
+          <button (click)="ordenarPor.set('recaudacion'); cargarRanking()"
+            [class.bg-white]="ordenarPor() === 'recaudacion'" [class.shadow-sm]="ordenarPor() === 'recaudacion'" [class.text-green-600]="ordenarPor() === 'recaudacion'"
+            class="flex-1 py-1.5 text-xs font-bold text-gray-500 rounded-lg transition-all">
+            💰 Por Ingresos
+          </button>
+        </div>
+      </div>
+
+      @if (cargandoRanking()) {
+        <p class="text-center text-gray-400 py-6 text-sm animate-pulse">Calculando ranking...</p>
+      } @else if (rankingProductos().length === 0) {
+        <div class="text-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <span class="text-4xl">😴</span>
+          <p class="text-gray-500 mt-2 font-medium">No hay ventas registradas<br>para esta fecha.</p>
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (item of rankingProductos(); track item.id; let i = $index) {
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 relative overflow-hidden">
+
+              @if (i === 0) { <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-yellow-400"></div> }
+              @if (i === 1) { <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-300"></div> }
+              @if (i === 2) { <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-600"></div> }
+
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ml-1"
+                [ngClass]="{'bg-yellow-100 text-yellow-600': i === 0, 'bg-gray-100 text-gray-600': i === 1, 'bg-amber-100 text-amber-700': i === 2, 'bg-transparent text-gray-400': i > 2}">
+                {{ i + 1 }}
+              </div>
+
+              <div class="text-3xl">{{ item.icono }}</div>
+              <div class="flex-1">
+                <h3 class="font-bold text-gray-800 leading-tight">{{ item.nombre }}</h3>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  <span class="font-bold text-gray-700">{{ item.cantidad }}</span> unidades
+                </p>
+              </div>
+
+              <div class="text-right">
+                <p class="font-black text-green-600 tracking-tight">{{ item.recaudacion | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+ @if (pestanaActiva() === 'crud') {
+    <div class="animate-fade-in">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-gray-800">Catálogo Actual</h2>
+        <button (click)="abrirModal()" class="bg-cereza text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-red-200 active:scale-95 transition-all">
+          + Nuevo Producto
+        </button>
+      </div>
+
+      @if (cargando()) {
+        <p class="text-center text-gray-400 py-4 text-sm">Cargando productos...</p>
+      }
+
+      <div class="space-y-3">
+        @for (prod of productos(); track prod.id) {
+          <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between" [class.opacity-60]="!prod.estado">
+
+            <div class="flex items-center gap-3">
+              <div class="text-3xl">{{ prod.icono }}</div>
+              <div>
+                <h3 class="font-bold text-gray-800 leading-tight">{{ prod.nombre }}</h3>
+                <p class="text-cereza font-bold text-sm">{{ prod.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button (click)="cambiarEstado(prod)"
+                class="text-[10px] font-bold px-2 py-1 rounded-lg"
+                [ngClass]="prod.estado ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">
+                {{ prod.estado ? 'ACTIVO' : 'PAUSADO' }}
+              </button>
+
+              <button (click)="abrirModal(prod)" class="p-2 text-gray-400 hover:text-blue-500 bg-gray-50 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.89l13.416-13.416zM12 14.75l5.25-5.25" /></svg>
+              </button>
+            </div>
+
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+</div> @if (mostrarModal()) {
+  <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+
+      <h2 class="text-xl font-black text-gray-800 mb-4">
+        {{ productoActual().id ? 'Editar Producto' : 'Nuevo Producto' }}
+      </h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Ícono (Emoji)</label>
+          <input type="text" [(ngModel)]="productoActual().icono" class="w-full text-2xl p-2 border border-gray-200 rounded-xl text-center bg-gray-50 focus:border-cereza focus:ring-1 focus:ring-cereza outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nombre del producto</label>
+          <input type="text" [(ngModel)]="productoActual().nombre" placeholder="Ej: Torta de Chocolate" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-cereza focus:ring-1 focus:ring-cereza outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Precio ($)</label>
+          <input type="number" [(ngModel)]="productoActual().precio_base" placeholder="0" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 font-bold text-lg focus:border-cereza focus:ring-1 focus:ring-cereza outline-none">
+        </div>
+      </div>
+
+     <div class="flex gap-3 mt-6">
+
+        @if (productoActual().id) {
+          <button (click)="eliminarProducto()" class="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors" title="Eliminar producto">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+          </button>
+        }
+
+        <button (click)="cerrarModal()" class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl">Cancelar</button>
+        <button (click)="guardarProducto()" class="flex-1 py-3 font-bold text-white bg-cereza rounded-xl shadow-lg shadow-red-200">
+          Guardar
+        </button>
+      </div>
+
+
+
+    </div>
+  </div>
+}
+
+

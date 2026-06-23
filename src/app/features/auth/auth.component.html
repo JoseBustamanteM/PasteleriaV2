@@ -1,0 +1,56 @@
+<div class="min-h-screen flex items-center justify-center bg-gris-claro px-4">
+  <div class="max-w-md w-full bg-nieve p-8 rounded-2xl shadow-sm border border-gray-100">
+
+    <div class="text-center mb-8">
+      <span class="text-4xl" role="img" aria-label="Pastel">🍰</span>
+      <h2 class="mt-4 text-2xl font-bold text-gris-oscuro">¡Bienvenido al POS!</h2>
+      <p class="text-sm text-gray-400 mt-1">Ingresa tus credenciales para administrar tus ventas</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="mb-5 p-3 bg-red-50 border-l-4 border-cereza text-red-700 text-sm rounded-r-xl transition-all">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="authForm" (ngSubmit)="onSubmit()" class="space-y-5">
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gris-oscuro mb-1">Correo Electrónico</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="ejemplo@pasteleria.com"
+          class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-cereza transition-colors text-gris-oscuro text-sm"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gris-oscuro mb-1">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-cereza transition-colors text-gris-oscuro text-sm"
+        />
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="authForm.invalid || isLoading()"
+        class="w-full py-3 bg-cereza text-nieve font-semibold rounded-xl transition-all hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2 mt-2 shadow-sm"
+      >
+        @if (isLoading()) {
+          <span class="animate-spin inline-block w-4 h-4 border-2 border-nieve border-t-transparent rounded-full"></span>
+          Verificando cuenta...
+        } @else {
+          Iniciar Sesión
+        }
+      </button>
+
+    </form>
+
+  </div>
+</div>

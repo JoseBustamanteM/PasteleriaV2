@@ -1,0 +1,248 @@
+<div class="h-full flex flex-col p-4 max-w-3xl mx-auto">
+
+  @if (paso() === 'fecha') {
+    <div class="flex-1 flex flex-col items-center justify-center animate-fade-in">
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 w-full max-w-sm text-center">
+        <div class="text-6xl mb-4">📅</div>
+        <h2 class="text-2xl font-black text-gris-oscuro mb-2">Día de Venta</h2>
+        <p class="text-gray-500 text-sm mb-6">Selecciona el día en el que ocurrieron estas ventas.</p>
+
+        <input
+          type="date"
+          [(ngModel)]="fechaSeleccionada"
+          class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-lg rounded-xl focus:ring-cereza focus:border-cereza block p-3 mb-6 text-center"
+        />
+
+        <button
+          (click)="irACatalogo()"
+          class="w-full bg-cereza hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors active:scale-95">
+          Continuar al Catálogo
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (paso() === 'catalogo') {
+    <div class="animate-fade-in flex-1 flex flex-col h-full">
+      <div class="mb-6 flex items-center gap-3">
+        <button (click)="volverDesdeCatalogo()" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        </button>
+        <div>
+          <h1 class="text-xl font-black text-gris-oscuro">Seleccionar Producto</h1>
+          <p class="text-cereza text-sm font-bold capitalize">{{ fechaSeleccionada() | date:'fullDate':'':'es' }}</p>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pb-24">
+        @if (cargando()) {
+          <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cereza"></div></div>
+        } @else {
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            @for (producto of productos(); track producto.id) {
+              <button
+                (click)="irAListaProducto(producto)"
+                class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md hover:border-red-100 hover:bg-red-50 transition-all flex flex-col items-center justify-center gap-3 active:scale-95">
+                <div class="text-5xl bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center shadow-inner">
+                  {{ producto.icono }}
+                </div>
+                <div class="text-center">
+                  <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1">{{ producto.nombre }}</h3>
+                  <p class="text-cereza font-black text-sm">{{ producto.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (paso() === 'lista-producto') {
+    <div class="animate-fade-in flex-1 flex flex-col h-full">
+      <div class="mb-6 flex items-center gap-3">
+        <button (click)="volver('catalogo')" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        </button>
+        <div>
+          <h1 class="text-xl font-black text-gris-oscuro">Ventas Registradas</h1>
+          <p class="text-gray-500 text-sm capitalize">{{ fechaSeleccionada() | date:'mediumDate':'':'es' }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+          <div class="text-4xl bg-gray-50 w-14 h-14 rounded-full flex items-center justify-center shrink-0">
+            {{ productoSeleccionado()?.icono }}
+          </div>
+          <div>
+            <h2 class="font-bold text-lg text-gray-800 leading-tight">{{ productoSeleccionado()?.nombre }}</h2>
+            <p class="text-gray-500 text-sm">{{ productoSeleccionado()?.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+          </div>
+        </div>
+
+        <button (click)="irAVenta()" class="bg-cereza text-white flex items-center gap-1 font-bold py-2 px-4 rounded-xl hover:bg-red-700 active:scale-95 transition-all shadow-sm text-sm">
+          <span class="text-lg">+</span> Agregar
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pb-24">
+        @if (cargandoVentas()) {
+          <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cereza"></div></div>
+        } @else if (ventasDelProducto().length === 0) {
+          <div class="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <span class="text-3xl opacity-50 mb-2 block">텅</span>
+            <p class="text-gray-400 text-sm">Aún no hay ventas de este producto hoy.</p>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-3">
+            @for (venta of ventasDelProducto(); track venta.id) {
+              <div class="flex flex-col p-3 bg-white rounded-xl border border-gray-100 shadow-sm gap-2">
+
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-sm font-semibold text-gray-800">
+                      {{ venta.cantidad }}x <span class="text-gray-500 font-normal">{{ venta.cliente?.nombre_completo || 'Cliente General' }}</span>
+                    </p>
+                    @if (!venta.entregado) {
+                      <span class="inline-block mt-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold rounded-md uppercase tracking-wider">
+                        ⏳ Entrega Pendiente
+                      </span>
+                    }
+                  </div>
+                  <div class="text-right leading-tight">
+                    <p class="text-sm font-bold text-gray-800">{{ venta.precio_total | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+                    @if (venta.estado.toLowerCase() === 'pendiente') {
+                      <p class="text-[10px] text-red-500 font-bold uppercase">Debe {{ (venta.precio_total - venta.valor_pagado) | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+                    } @else {
+                      <p class="text-[10px] text-green-600 font-bold uppercase tracking-wider">Pagado</p>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex justify-end gap-2 border-t border-gray-50 pt-2 mt-1">
+                  <button (click)="editarVenta(venta)" class="flex items-center gap-1 text-xs text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
+                    Modificar
+                  </button>
+                  <button (click)="eliminarVenta(venta)" class="flex items-center gap-1 text-xs text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg font-semibold transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                    Anular
+                  </button>
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (paso() === 'venta') {
+    <div class="animate-fade-in flex-1 flex flex-col h-full">
+      <div class="mb-6 flex items-center gap-3">
+        <button (click)="volver('lista-producto')" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        </button>
+        <div>
+          <h1 class="text-xl font-black text-gris-oscuro">{{ editandoId() ? 'Editar' : 'Agregar' }} {{ productoSeleccionado()?.nombre }}</h1>
+          <p class="text-gray-500 text-sm capitalize">{{ fechaSeleccionada() | date:'mediumDate':'':'es' }}</p>
+        </div>
+      </div>
+
+      <div class="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-gray-200 overflow-y-auto pb-24">
+        <div class="flex flex-col gap-5">
+
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Cantidad Vendida</label>
+            <div class="flex items-center gap-4">
+              <button (click)="cambiarCantidad(-1)" class="w-12 h-12 rounded-xl bg-gray-100 text-gray-600 font-bold text-xl hover:bg-gray-200 active:scale-95 transition-all">-</button>
+              <div class="flex-1 text-center text-3xl font-black text-gray-800">{{ formCantidad() }}</div>
+              <button (click)="cambiarCantidad(1)" class="w-12 h-12 rounded-xl bg-gray-100 text-gray-600 font-bold text-xl hover:bg-gray-200 active:scale-95 transition-all">+</button>
+            </div>
+          </div>
+
+          <hr class="border-gray-100">
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Total ($)</label>
+              <input type="number" [(ngModel)]="formPrecioTotal" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Cliente Pagó ($)</label>
+              <input type="number" [(ngModel)]="formValorPagado" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg" [class.text-red-600]="formValorPagado() < formPrecioTotal()">
+            </div>
+          </div>
+
+          @if (formValorPagado() < formPrecioTotal()) {
+            <div class="bg-red-50 text-red-600 p-3 rounded-xl flex items-center gap-2 border border-red-100">
+              <span class="text-xl">⚠️</span>
+              <p class="text-sm font-bold">Esta venta generará una deuda de {{ (formPrecioTotal() - formValorPagado()) | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+            </div>
+          }
+
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Método de Pago</label>
+            <select [(ngModel)]="formMetodoPagoId" class="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-cereza focus:border-cereza block p-3">
+              @for (metodo of metodosPago(); track metodo.id) { <option [value]="metodo.id">{{ metodo.nombre }}</option> }
+            </select>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-end mb-2">
+              <label class="block text-sm font-bold text-gray-700">Cliente <span class="text-gray-400 font-normal">(Opcional)</span></label>
+              @if (!creandoCliente()) {
+                <button (click)="creandoCliente.set(true)" class="text-xs font-bold text-cereza hover:text-red-700 bg-red-50 px-2 py-1 rounded-md transition-colors shadow-sm border border-red-100">+ Nuevo</button>
+              }
+            </div>
+
+            @if (creandoCliente()) {
+              <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 mb-2 flex items-center gap-2 animate-fade-in shadow-inner">
+                <input type="text" [(ngModel)]="nuevoClienteNombre" placeholder="Nombre completo..." class="flex-1 bg-white border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-cereza focus:border-cereza block p-2.5 font-medium">
+
+                <button (click)="guardarNuevoCliente()" [disabled]="!nuevoClienteNombre().trim() || guardandoCliente()" class="bg-gray-800 text-white p-2.5 rounded-lg hover:bg-black disabled:opacity-50 transition-all shadow-sm">
+                  @if (guardandoCliente()) {
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                  }
+                </button>
+
+                <button (click)="creandoCliente.set(false)" class="bg-gray-200 text-gray-500 p-2.5 rounded-lg hover:bg-gray-300 hover:text-gray-700 transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            } @else {
+              <select [(ngModel)]="formClienteId" class="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-cereza focus:border-cereza block p-3">
+                <option value="">-- Cliente General / Anónimo --</option>
+                @for (cliente of clientes(); track cliente.id) { <option [value]="cliente.id">{{ cliente.nombre_completo }}</option> }
+              </select>
+            }
+          </div>
+
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none mt-2" (click)="formEntregado.set(!formEntregado())">
+            <div>
+              <p class="font-bold text-gray-700 text-sm">¿Producto Entregado?</p>
+              <p class="text-xs text-gray-500 mt-0.5">Marca si el cliente ya se llevó el pastel.</p>
+            </div>
+            <div class="relative w-14 h-8 transition-colors duration-300 ease-in-out rounded-full shadow-inner" [ngClass]="formEntregado() ? 'bg-green-500' : 'bg-gray-300'">
+              <span class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ease-in-out shadow-sm" [ngClass]="formEntregado() ? 'translate-x-6' : 'translate-x-0'"></span>
+            </div>
+          </div>
+
+        </div>
+
+        <button (click)="confirmarVenta()" [disabled]="guardando()" class="w-full mt-8 bg-gray-800 hover:bg-black text-white font-bold py-4 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
+          @if (guardando()) {
+            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Procesando...
+          } @else {
+            <span>💾 {{ editandoId() ? 'Actualizar Venta' : 'Guardar Venta' }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

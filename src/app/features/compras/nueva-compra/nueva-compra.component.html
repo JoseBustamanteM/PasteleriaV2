@@ -1,0 +1,181 @@
+<div class="p-4 pb-32">
+
+  <div class="flex items-center gap-3 mb-6">
+    <button (click)="volver()" class="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-red-600 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+    </button>
+    <h1 class="text-2xl font-black text-gray-800">Registrar Compra</h1>
+  </div>
+
+  @if (cargandoDatos()) {
+    <p class="text-center text-gray-400 py-10 animate-pulse text-sm">Preparando formulario...</p>
+  } @else {
+
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4 space-y-4">
+      <h2 class="text-xs font-black text-gray-400 uppercase tracking-wider">1. Información del Gasto</h2>
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1">Proveedor</label>
+        <select [ngModel]="proveedorSeleccionado()" (ngModelChange)="proveedorSeleccionado.set($event)" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-red-500 transition-all">
+          <option value="" disabled selected>Selecciona a quién le compraste...</option>
+          @for (prov of proveedores(); track prov.id) {
+            <option [value]="prov.id">{{ prov.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1">Fecha de Compra</label>
+        <input type="date" [ngModel]="fechaCompra()" (ngModelChange)="fechaCompra.set($event)" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-red-500 transition-all">
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xs font-black text-gray-400 uppercase tracking-wider">2. Insumos Comprados</h2>
+        <button (click)="abrirModalInsumo()" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors">
+          + Añadir Insumo
+        </button>
+      </div>
+
+      @if (carrito().length === 0) {
+        <div class="text-center py-8 border-2 border-dashed border-gray-100 rounded-xl">
+          <p class="text-gray-400 text-sm">Tu registro está vacío.</p>
+          <p class="text-[10px] text-gray-300 mt-1">Añade los productos que compraste.</p>
+        </div>
+      } @else {
+        <div class="space-y-2 mb-4">
+          @for (item of carrito(); track $index) {
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 relative overflow-hidden">
+              <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-400"></div>
+              <div class="flex items-center gap-3 ml-2">
+                <span class="text-2xl">{{ item.icono }}</span>
+                <div>
+                  <h3 class="font-bold text-gray-800 text-sm">{{ item.nombre }}</h3>
+                  <p class="text-[10px] text-gray-500">{{ item.cantidad }} unidades registradas</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <p class="font-black text-gray-800">{{ item.valor_comprado | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+                <button (click)="eliminarDelCarrito($index)" class="text-gray-300 hover:text-red-500 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="border-t border-gray-100 pt-4 flex justify-between items-end">
+        <p class="text-[10px] font-bold text-gray-400 uppercase">Total de la Compra</p>
+        <p class="text-2xl font-black text-red-600">{{ totalCompra() | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+      </div>
+    </div>
+
+    <button (click)="finalizarCompra()" [disabled]="guardando() || !proveedorSeleccionado() || carrito().length === 0"
+      class="w-full py-4 rounded-2xl font-black text-white shadow-lg transition-all"
+      [ngClass]="(guardando() || !proveedorSeleccionado() || carrito().length === 0) ? 'bg-gray-300 shadow-none' : 'bg-red-600 shadow-red-200 active:scale-95'">
+      {{ guardando() ? 'Guardando en la base de datos...' : 'Finalizar y Guardar Compra' }}
+    </button>
+  }
+</div>
+
+@if (mostrarModalInsumo()) {
+  <div class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+      <h2 class="text-xl font-black text-gray-800 mb-4">Añadir al registro</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Materia Prima</label>
+          @if (mostrarModalInsumo()) {
+  <div class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+      <h2 class="text-xl font-black text-gray-800 mb-4">Añadir al registro</h2>
+
+      <div class="space-y-5">
+
+        <div class="relative">
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Buscar Insumo</label>
+          <div class="relative">
+            <input type="text"
+                   [ngModel]="busquedaInsumo()"
+                   (ngModelChange)="cambioEnBuscador($event)"
+                   (focus)="mostrarDropdown.set(true)"
+                   placeholder="Ej: Levadura..."
+                   class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-red-500 outline-none font-bold text-gray-700">
+
+            @if (itemActual().materia_prima_id) {
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 11.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>
+              </span>
+            }
+          </div>
+
+          @if (mostrarDropdown()) {
+            <div class="fixed inset-0 z-40" (click)="mostrarDropdown.set(false)"></div>
+          }
+
+          @if (mostrarDropdown()) {
+            <div class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+
+              @for (ins of insumosFiltrados(); track ins.id) {
+                <div (click)="seleccionarInsumo(ins)" class="p-3 hover:bg-red-50 cursor-pointer border-b border-gray-50 flex items-center gap-3 transition-colors">
+                  <span class="text-lg">{{ ins.icono }}</span>
+                  <span class="font-bold text-sm text-gray-700">{{ ins.nombre }}</span>
+                </div>
+              }
+
+              @if (busquedaInsumo().trim() && !coincidenciaExacta()) {
+                <div (click)="crearInsumoRapido()" class="p-3 bg-blue-50 hover:bg-blue-100 cursor-pointer flex items-center gap-2 text-blue-700 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                  <div>
+                    <span class="font-bold text-sm block">Crear nuevo insumo:</span>
+                    <span class="text-xs">"{{ busquedaInsumo() }}"</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cantidad</label>
+            <input type="number" [(ngModel)]="itemActual().cantidad" placeholder="1" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-red-500 outline-none font-bold text-center">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Total ($)</label>
+            <input type="number" [(ngModel)]="itemActual().valor_comprado" placeholder="0" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-red-500 outline-none font-bold text-center text-red-600">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button (click)="cerrarModalInsumo()" class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200">Cancelar</button>
+        <button (click)="agregarAlCarrito()" [disabled]="!itemActual().materia_prima_id" class="flex-1 py-3 font-bold text-white shadow-lg transition-all" [ngClass]="itemActual().materia_prima_id ? 'bg-gray-800 hover:bg-black' : 'bg-gray-300 shadow-none'">Añadir</button>
+      </div>
+    </div>
+  </div>
+}
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cantidad</label>
+            <input type="number" [(ngModel)]="itemActual().cantidad" placeholder="1" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-red-500 outline-none font-bold text-center">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Costo Total ($)</label>
+            <input type="number" [(ngModel)]="itemActual().valor_comprado" placeholder="0" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-red-500 outline-none font-bold text-center text-red-600">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button (click)="cerrarModalInsumo()" class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200">Cancelar</button>
+        <button (click)="agregarAlCarrito()" class="flex-1 py-3 font-bold text-white bg-gray-800 rounded-xl shadow-lg hover:bg-black transition-colors">Añadir al Carrito</button>
+      </div>
+    </div>
+  </div>
+}

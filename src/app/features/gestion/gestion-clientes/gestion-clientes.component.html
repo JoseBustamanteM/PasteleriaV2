@@ -1,0 +1,146 @@
+<div class="p-4 pb-32">
+
+  <!-- Cabecera -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <button (click)="volver()" class="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-cereza transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+      </button>
+      <h1 class="text-2xl font-black text-gray-800">Clientes</h1>
+    </div>
+
+    <button (click)="abrirModal()" class="bg-cereza text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-red-200 active:scale-95 transition-all">
+      + Nuevo
+    </button>
+  </div>
+
+  <!-- Controles de Filtro y Búsqueda -->
+  <div class="mb-6 space-y-3">
+
+    <!-- Buscador -->
+    <div class="relative shadow-sm rounded-xl">
+      <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+      </span>
+      <input type="text" [ngModel]="textoBusqueda()" (ngModelChange)="textoBusqueda.set($event)" placeholder="Buscar cliente..." class="w-full pl-10 p-3 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-cereza focus:ring-1 focus:ring-cereza transition-all">
+    </div>
+
+    <!-- Filtros tipo Píldora (Chips) con scroll horizontal -->
+    <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <button (click)="criterioOrden.set('nombre')"
+        [class.bg-cereza]="criterioOrden() === 'nombre'" [class.text-white]="criterioOrden() === 'nombre'"
+        [class.bg-white]="criterioOrden() !== 'nombre'" [class.text-gray-500]="criterioOrden() !== 'nombre'"
+        class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 shadow-sm transition-all">
+        A - Z
+      </button>
+      <button (click)="criterioOrden.set('deuda')"
+        [class.bg-cereza]="criterioOrden() === 'deuda'" [class.text-white]="criterioOrden() === 'deuda'"
+        [class.bg-white]="criterioOrden() !== 'deuda'" [class.text-gray-500]="criterioOrden() !== 'deuda'"
+        class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 shadow-sm transition-all">
+        🚨 Mayor Deuda
+      </button>
+      <button (click)="criterioOrden.set('compras')"
+        [class.bg-cereza]="criterioOrden() === 'compras'" [class.text-white]="criterioOrden() === 'compras'"
+        [class.bg-white]="criterioOrden() !== 'compras'" [class.text-gray-500]="criterioOrden() !== 'compras'"
+        class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 shadow-sm transition-all">
+        🛍️ + Compras
+      </button>
+      <button (click)="criterioOrden.set('gastado')"
+        [class.bg-cereza]="criterioOrden() === 'gastado'" [class.text-white]="criterioOrden() === 'gastado'"
+        [class.bg-white]="criterioOrden() !== 'gastado'" [class.text-gray-500]="criterioOrden() !== 'gastado'"
+        class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 shadow-sm transition-all">
+        💰 + Gastado
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Clientes -->
+  <div class="animate-fade-in">
+    @if (cargando()) {
+      <p class="text-center text-gray-400 py-4 text-sm animate-pulse">Cargando directorio...</p>
+    } @else if (clientesVisualizados().length === 0) {
+      <div class="text-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <span class="text-4xl">🕵️‍♂️</span>
+        <p class="text-gray-500 mt-2 font-medium">No se encontraron clientes.</p>
+      </div>
+    } @else {
+      <div class="space-y-2">
+        @for (cli of clientesVisualizados(); track cli.id) {
+
+          <!-- Tarjeta de Cliente (Compacta en 1 sola fila) -->
+          <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden flex items-center gap-2">
+
+            <!-- Barra lateral roja si debe dinero -->
+            @if (cli.totalAdeudado > 0) {
+              <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+            }
+
+            <!-- Avatar Pequeño -->
+            <div class="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm shrink-0 ml-1"
+                 [ngClass]="cli.totalAdeudado > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'">
+              {{ cli.nombre_completo.charAt(0).toUpperCase() }}
+            </div>
+
+            <!-- Nombre y N° de Compras (Ocupa el espacio sobrante y se recorta si es muy largo) -->
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-800 text-sm leading-tight truncate">{{ cli.nombre_completo }}</h3>
+              <p class="text-[10px] text-gray-400 font-medium truncate">{{ cli.totalCompras }} compras</p>
+            </div>
+
+            <!-- Bloque de Gastado -->
+            <div class="flex flex-col items-end shrink-0 border-r border-gray-100 pr-2">
+              <span class="text-[8px] uppercase font-bold text-gray-400">Gastado</span>
+              <span class="font-black text-xs text-gray-700">{{ cli.totalGastado | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+
+            <!-- Bloque de Deuda (Solo si debe) -->
+            @if (cli.totalAdeudado > 0) {
+              <div class="flex flex-col items-end shrink-0">
+                <span class="text-[8px] uppercase font-bold text-red-400">Deuda</span>
+                <span class="font-black text-xs text-red-600">{{ cli.totalAdeudado | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+            }
+
+            <!-- Botón Editar -->
+            <button (click)="abrirModal(cli)" class="p-1.5 ml-1 text-gray-400 hover:text-blue-500 bg-gray-50 rounded-lg transition-colors shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.89l13.416-13.416zM12 14.75l5.25-5.25" /></svg>
+            </button>
+
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- MODAL PARA CREAR/EDITAR CLIENTE -->
+@if (mostrarModal()) {
+  <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+
+      <h2 class="text-xl font-black text-gray-800 mb-4">
+        {{ clienteActual().id ? 'Editar Cliente' : 'Nuevo Cliente' }}
+      </h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nombre Completo</label>
+          <input type="text" [(ngModel)]="clienteActual().nombre_completo" placeholder="Ej: Juan Pérez" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:border-cereza focus:ring-1 focus:ring-cereza outline-none">
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        @if (clienteActual().id) {
+          <button (click)="eliminarCliente()" class="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors" title="Eliminar cliente">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+          </button>
+        }
+        <button (click)="cerrarModal()" class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl">Cancelar</button>
+        <button (click)="guardarCliente()" class="flex-1 py-3 font-bold text-white bg-cereza rounded-xl shadow-lg shadow-red-200">
+          Guardar
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
