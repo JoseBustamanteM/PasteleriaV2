@@ -60,7 +60,7 @@ export class GestionClientesComponent implements OnInit {
     this.router.navigate(['/gestion']);
   }
 
-  async cargarClientes() {
+async cargarClientes() {
     this.cargando.set(true);
     const { data } = await this.supabase.obtenerTodosLosClientes();
 
@@ -73,8 +73,16 @@ export class GestionClientesComponent implements OnInit {
 
         if (c.venta) {
           c.venta.forEach((v: any) => {
-            gastado += (v.precio_total || 0);
-            adeudado += ((v.precio_total || 0) - (v.valor_pagado || 0));
+            const totalVenta = v.precio_total || 0;
+            const pagadoVenta = v.valor_pagado || 0;
+
+            // Sumamos todo el dinero histórico que el cliente ha movido
+            gastado += totalVenta;
+            
+            // LA MAGIA: Calculamos la deuda por cada venta individual. 
+            // Si pagó de más en una venta, Math.max lo convierte en 0, 
+            // evitando que arrastre un saldo negativo al total adeudado.
+            adeudado += Math.max(0, totalVenta - pagadoVenta);
           });
         }
 

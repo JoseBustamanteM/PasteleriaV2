@@ -51,17 +51,15 @@ export class DashboardComponent implements OnInit {
   }
 
   private async inicializarDashboard() {
-    await this.cargarKPIs();
+    
     this.cargarDatosDelMes(this.viewDate());
   }
 
   // Función asíncrona para cargar el calendario
-  async cargarDatosDelMes(fecha: Date) {
+async cargarDatosDelMes(fecha: Date) {
     const inicio = startOfMonth(fecha);
     const fin = endOfMonth(fecha);
 
-    // IMPORTANTE: Asegúrate de que obtenerVentasDelMes en tu servicio también
-    // esté trayendo: producto(nombre, icono), precio_total y valor_pagado
     const { data, error } = await this.supabase.obtenerVentasDelMes(inicio, fin);
 
     if (error) {
@@ -70,6 +68,11 @@ export class DashboardComponent implements OnInit {
     }
 
     const nuevoMapa: Record<string, DiaResumen> = {};
+    
+    // VARIABLES PARA LAS TARJETAS (KPIS)
+    let ingresosMes = 0;
+    let deudaMes = 0;
+    const conteoProductos: Record<string, number> = {};
 
     data?.forEach((venta: any) => {
       const fechaVenta = format(new Date(venta.fecha), 'yyyy-MM-dd');
@@ -78,28 +81,50 @@ export class DashboardComponent implements OnInit {
         nuevoMapa[fechaVenta] = { estado: 'perfect', pagado: 0, deuda: 0, iconos: [] };
       }
 
-      // Cálculos de dinero
+      // 1. Cálculos de dinero
       const pagado = Number(venta.valor_pagado || 0);
       const total = Number(venta.precio_total || 0);
-      const deuda = total - pagado;
+      const deuda = Math.max(0, total - pagado);
 
+      // Sumamos para el cuadrito del día
       nuevoMapa[fechaVenta].pagado += pagado;
       nuevoMapa[fechaVenta].deuda += deuda;
 
-      // Definir estado
+      // Sumamos para las tarjetas generales del mes
+      ingresosMes += pagado;
+      deudaMes += deuda;
+
+      // 2. Estado (Rojo o Verde)
       const estadoReal = String(venta.estado).trim().toLowerCase();
       if (estadoReal === 'pendiente') {
         nuevoMapa[fechaVenta].estado = 'alert';
       }
 
-      // Guardar íconos sin repetir
+      // 3. Íconos y Producto Estrella
       const icono = (venta.producto as any)?.icono;
+      const nombre = (venta.producto as any)?.nombre || 'Desconocido';
+      
       if (icono && !nuevoMapa[fechaVenta].iconos.includes(icono)) {
         nuevoMapa[fechaVenta].iconos.push(icono);
       }
+      
+      conteoProductos[nombre] = (conteoProductos[nombre] || 0) + 1;
     });
 
     this.heatMap.set(nuevoMapa);
+
+    // 4. Calculamos cuál es el producto que más se repitió (Estrella)
+    const llaves = Object.keys(conteoProductos);
+    const estrella = llaves.length > 0
+      ? llaves.reduce((a, b) => conteoProductos[a] > conteoProductos[b] ? a : b)
+      : 'Sin ventas';
+
+    // 5. Actualizamos las tarjetas de arriba
+    this.kpis.set({
+      ingresos: ingresosMes,
+      deuda: deudaMes,
+      productoEstrella: estrella
+    });
   }
 
   cambiarMes(nuevaFecha: Date) {
@@ -148,38 +173,5 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/historial']);
   }
 
-  async cargarKPIs() {
-    // Usamos el mes actual para los KPIs
-    const ahora = new Date();
-    // Reemplacé el estático 6, 2026 por las variables dinámicas de la fecha actual,
-    // pero puedes volver a poner (6, 2026) si estás haciendo pruebas específicas.
-    const { data, error } = await this.supabase.obtenerResumenMes(6, 2026);
 
-    if (data && data.length > 0) {
-      let ingresos = 0;
-      let deuda = 0;
-      const conteoProductos: Record<string, number> = {};
-
-      data.forEach(v => {
-        ingresos += v.valor_pagado;
-        deuda += (v.precio_total - v.valor_pagado);
-
-        const nombre = (v.producto as any)?.nombre || 'Desconocido';
-        conteoProductos[nombre] = (conteoProductos[nombre] || 0) + 1;
-      });
-
-      const llaves = Object.keys(conteoProductos);
-      const estrella = llaves.length > 0
-        ? llaves.reduce((a, b) => conteoProductos[a] > conteoProductos[b] ? a : b)
-        : 'Sin ventas';
-
-      this.kpis.set({
-        ingresos: ingresos,
-        deuda: deuda,
-        productoEstrella: estrella
-      });
-    } else {
-      this.kpis.set({ ingresos: 0, deuda: 0, productoEstrella: 'Sin datos' });
-    }
-  }
 }
