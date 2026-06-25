@@ -154,6 +154,10 @@
       <div class="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-gray-200 overflow-y-auto pb-24">
         <div class="flex flex-col gap-5">
 
+
+
+
+
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-2">Cantidad Vendida</label>
             <div class="flex items-center gap-4">
@@ -163,34 +167,7 @@
             </div>
           </div>
 
-          <hr class="border-gray-100">
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Total ($)</label>
-              <input type="number" [(ngModel)]="formPrecioTotal" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg">
-            </div>
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Cliente Pagó ($)</label>
-              <input type="number" [(ngModel)]="formValorPagado" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg" [class.text-red-600]="formValorPagado() < formPrecioTotal()">
-            </div>
-          </div>
-
-          @if (formValorPagado() < formPrecioTotal()) {
-            <div class="bg-red-50 text-red-600 p-3 rounded-xl flex items-center gap-2 border border-red-100">
-              <span class="text-xl">⚠️</span>
-              <p class="text-sm font-bold">Esta venta generará una deuda de {{ (formPrecioTotal() - formValorPagado()) | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-            </div>
-          }
-
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Método de Pago</label>
-            <select [(ngModel)]="formMetodoPagoId" class="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-cereza focus:border-cereza block p-3">
-              @for (metodo of metodosPago(); track metodo.id) { <option [value]="metodo.id">{{ metodo.nombre }}</option> }
-            </select>
-          </div>
-
-          <div>
+           <div>
             <div class="flex justify-between items-end mb-2">
               <label class="block text-sm font-bold text-gray-700">Cliente <span class="text-gray-400 font-normal">(Opcional)</span></label>
               @if (!creandoCliente()) {
@@ -221,6 +198,35 @@
               </select>
             }
           </div>
+
+          <hr class="border-gray-100">
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Total ($)</label>
+              <input type="number" [(ngModel)]="formPrecioTotal" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">Cliente Pagó ($)</label>
+              <input type="number" [(ngModel)]="formValorPagado" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg" [class.text-red-600]="formValorPagado() < formPrecioTotal()">
+            </div>
+          </div>
+
+          @if (formValorPagado() < formPrecioTotal()) {
+            <div class="bg-red-50 text-red-600 p-3 rounded-xl flex items-center gap-2 border border-red-100">
+              <span class="text-xl">⚠️</span>
+              <p class="text-sm font-bold">Esta venta generará una deuda de {{ (formPrecioTotal() - formValorPagado()) | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+            </div>
+          }
+
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Método de Pago</label>
+            <select [(ngModel)]="formMetodoPagoId" class="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-cereza focus:border-cereza block p-3">
+              @for (metodo of metodosPago(); track metodo.id) { <option [value]="metodo.id">{{ metodo.nombre }}</option> }
+            </select>
+          </div>
+
+
 
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none mt-2" (click)="formEntregado.set(!formEntregado())">
             <div>

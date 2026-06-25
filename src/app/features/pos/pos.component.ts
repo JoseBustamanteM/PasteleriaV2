@@ -193,14 +193,23 @@ export class PosComponent implements OnInit {
     }
   }
 
-  async confirmarVenta() {
+async confirmarVenta() {
     this.guardando.set(true);
     const total = this.formPrecioTotal();
     const pagado = this.formValorPagado();
     const estado = pagado < total ? 'Pendiente' : 'Pagado';
 
+    // 1. Obtenemos la fecha elegida ("2026-04-27")
+    const fechaElegida = this.fechaSeleccionada();
+    const [year, month, day] = fechaElegida.split('-').map(Number);
+
+    // 2. Creamos la fecha anclada exactamente a las 12:00 PM (Mediodía) HORA LOCAL
+    // Esto crea un margen de seguridad perfecto contra los desfases horarios (UTC).
+    const fechaLocalSegura = new Date(year, month - 1, day, 12, 0, 0);
+
+    // 3. Supabase lo guarda como UTC, pero al anclarlo a las 12, jamás retrocederá un día entero.
     const payload = {
-      created_at: `${this.fechaSeleccionada()}T12:00:00+00`,
+      fecha: fechaLocalSegura.toISOString(),
       producto_id: this.productoSeleccionado()!.id,
       cliente_id: this.formClienteId() || null,
       metodo_pago_id: this.formMetodoPagoId(),

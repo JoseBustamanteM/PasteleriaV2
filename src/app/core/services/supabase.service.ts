@@ -60,9 +60,14 @@ export class SupabaseService {
   }
 
   // Nuevo método para traer el detalle de un solo día
-async obtenerDetalleVentasDia(fechaStr: string) {
-    const inicio = `${fechaStr}T00:00:00.000Z`;
-    const fin = `${fechaStr}T23:59:59.999Z`;
+// Nuevo método para traer el detalle de un solo día (Corregido por Zona Horaria)
+  async obtenerDetalleVentasDia(fechaStr: string) {
+    // fechaStr viene como "2026-04-26"
+    const [year, month, day] = fechaStr.split('-').map(Number);
+
+    // Creamos la fecha de inicio y fin usando la zona horaria LOCAL exacta
+    const inicio = new Date(year, month - 1, day, 0, 0, 0);
+    const fin = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     return await this.client
       .from('venta')
@@ -76,10 +81,9 @@ async obtenerDetalleVentasDia(fechaStr: string) {
         producto ( nombre, icono ),
         cliente ( nombre_completo )
       `)
-      .gte('fecha', inicio)
-      .lte('fecha', fin);
+      .gte('fecha', inicio.toISOString()) // Se convierte a UTC seguro
+      .lte('fecha', fin.toISOString());   // Se convierte a UTC seguro
   }
-
   // Marcar una venta como totalmente pagada
   async pagarVenta(id: string, precioTotal: number) {
     return await this.client
@@ -121,10 +125,13 @@ async obtenerDetalleVentasDia(fechaStr: string) {
     return await this.client.from('venta').insert(ventaData);
   }
 
-  // Obtener ventas de un producto específico en un día específico
+
+// Obtener ventas de un producto específico en un día específico (Corregido por Zona Horaria)
   async obtenerVentasPorProductoYDia(productoId: string, fechaStr: string) {
-    const inicio = `${fechaStr}T00:00:00.000Z`;
-    const fin = `${fechaStr}T23:59:59.999Z`;
+    const [year, month, day] = fechaStr.split('-').map(Number);
+
+    const inicio = new Date(year, month - 1, day, 0, 0, 0);
+    const fin = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     return await this.client
       .from('venta')
@@ -134,8 +141,8 @@ async obtenerDetalleVentasDia(fechaStr: string) {
         cliente ( nombre_completo )
       `)
       .eq('producto_id', productoId)
-      .gte('fecha', inicio)
-      .lte('fecha', fin)
+      .gte('fecha', inicio.toISOString())
+      .lte('fecha', fin.toISOString())
       .order('created_at', { ascending: false });
   }
 
