@@ -48,15 +48,17 @@ export class SupabaseService {
 
   // Nuevo método para traer las ventas de un rango de fechas
   // Obtener ventas del mes para el Dashboard
+ // Obtener ventas del mes para el Dashboard
   async obtenerVentasDelMes(fechaInicio: Date, fechaFin: Date) {
     const inicioIso = fechaInicio.toISOString();
     const finIso = fechaFin.toISOString();
 
     return await this.client
       .from('venta')
-      .select('fecha, estado') // <-- CORREGIDO: Ahora traemos 'fecha'
-      .gte('fecha', inicioIso) // <-- CORREGIDO: Filtramos por 'fecha'
-      .lte('fecha', finIso);   // <-- CORREGIDO: Filtramos por 'fecha'
+      // AQUÍ ESTÁ LA MAGIA: Le pedimos el precio, lo pagado y el ícono del producto
+      .select('fecha, estado, precio_total, valor_pagado, producto(nombre, icono)') 
+      .gte('fecha', inicioIso) 
+      .lte('fecha', finIso);  
   }
 
   // Nuevo método para traer el detalle de un solo día
@@ -230,7 +232,7 @@ async obtenerResumenMes(mes: number, anio: number) {
 
   return await this.client
     .from('venta')
-    .select(`precio_total, valor_pagado, estado, producto(nombre)`)
+    .select(`precio_total, valor_pagado, estado, producto(nombre, icono)`)
     .gte('fecha', inicio) // Filtra desde el 1ero
     .lte('fecha', fin);   // Hasta el último día
 }
