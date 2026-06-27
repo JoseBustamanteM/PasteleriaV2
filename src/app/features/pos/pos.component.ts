@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { format } from 'date-fns';
@@ -18,6 +18,14 @@ export class PosComponent implements OnInit {
   private supabase = inject(SupabaseService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+
+  totalVendido = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + v.cantidad, 0));
+
+  totalEntregado = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + (v.entregado ? v.cantidad : 0), 0));
+
+  totalDineroVendido = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + (v.precio_total || 0), 0));
+
+  totalDeuda = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + Math.max(0, (v.precio_total || 0) - (v.valor_pagado || 0)), 0));
 
   paso = signal<'fecha' | 'catalogo' | 'lista-producto' | 'venta'>('fecha');
   fechaSeleccionada = signal<string>(format(new Date(), 'yyyy-MM-dd'));
@@ -39,7 +47,7 @@ export class PosComponent implements OnInit {
   formValorPagado = signal<number>(0);
   formMetodoPagoId = signal<string>('');
   formClienteId = signal<string>('');
-  formEntregado = signal<boolean>(true);
+  formEntregado = signal<boolean>(false);
   guardando = signal<boolean>(false);
 
   // NUEVO: Mini-formulario Cliente
@@ -129,9 +137,9 @@ export class PosComponent implements OnInit {
     this.editandoId.set(null);
     this.formCantidad.set(1);
     this.formPrecioTotal.set(this.productoSeleccionado()!.precio_base);
-    this.formValorPagado.set(this.productoSeleccionado()!.precio_base);
+    this.formValorPagado.set(0);
     this.formClienteId.set('');
-    this.formEntregado.set(true);
+    this.formEntregado.set(false);
     this.creandoCliente.set(false); // Cerramos el mini form si estaba abierto
     this.nuevoClienteNombre.set('');
     if (this.metodosPago().length > 0) this.formMetodoPagoId.set(this.metodosPago()[0].id);
@@ -236,6 +244,50 @@ async confirmarVenta() {
     } else {
       await this.cargarVentasDelProducto();
       this.volver('lista-producto');
+    }
+  }
+
+  // --- FUNCIONES PARA LOS CHECKBOXES RÁPIDOS ---
+
+  async marcarComoEntregado(venta: any, entregado: boolean) {
+    // Actualización visual instantánea
+    const ventas = this.ventasDelProducto();
+    const index = ventas.findIndex(v => v.id === venta.id);
+    if (index !== -1) {
+      ventas[index].entregado = entregado;
+      this.ventasDelProducto.set([...ventas]);
+    }
+
+    // Guardado en base de datos
+    const { error } = await this.supabase.actualizarVenta(venta.id, { entregado });
+    if (error) {
+      alert('Error al actualizar entrega: ' + error.message);
+      await this.cargarVentasDelProducto(); // Revertimos si hay error
+    }
+  }
+
+  async marcarComoPagado(venta: any, pagadoCompleto: boolean) {
+    const ventas = this.ventasDelProducto();
+    const index = ventas.findIndex(v => v.id === venta.id);
+
+    // Si se marca como pagado, el valor pagado es igual al total. Si se desmarca, vuelve a 0.
+    const nuevoValorPagado = pagadoCompleto ? venta.precio_total : 0;
+    const nuevoEstado = pagadoCompleto ? 'Pagado' : 'Pendiente';
+
+    if (index !== -1) {
+      ventas[index].valor_pagado = nuevoValorPagado;
+      ventas[index].estado = nuevoEstado;
+      this.ventasDelProducto.set([...ventas]);
+    }
+
+    const { error } = await this.supabase.actualizarVenta(venta.id, {
+      valor_pagado: nuevoValorPagado,
+      estado: nuevoEstado
+    });
+
+    if (error) {
+      alert('Error al actualizar pago: ' + error.message);
+      await this.cargarVentasDelProducto();
     }
   }
 }
