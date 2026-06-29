@@ -61,7 +61,7 @@ export class CuentasCobrarComponent implements OnInit {
           clienteNombre,
           totalDeuda: 0,
           ventas: [],
-          expandido: true,
+          expandido: false,
           metodo_pago_grupo: metodoDefaultId
         });
       }

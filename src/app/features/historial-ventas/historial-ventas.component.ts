@@ -1,61 +1,124 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms'; // Vital para los inputs de fecha
 import { SupabaseService } from '../../core/services/supabase.service';
+import { startOfMonth, endOfMonth, addMonths, subMonths, format } from 'date-fns';
 
 @Component({
-  selector: 'app-historial-ventas',
+  selector: 'app-historial',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './historial-ventas.component.html'
+  imports: [CommonModule, FormsModule], // Agregamos FormsModule aquí
+  templateUrl: './historial-ventas.component.html',
+  host: { 'class': 'block h-full w-full bg-gray-50' }
 })
 export class HistorialVentasComponent implements OnInit {
   private supabase = inject(SupabaseService);
-  private router = inject(Router);
+
+  // Estado principal
+  cargando = signal<boolean>(true);
 
   // Filtros
-  desde = signal<string>('');
-  hasta = signal<string>('');
-  estado = signal<string>('');
-  cliente_id = signal<string>('');
-  metodo_pago_id = signal<string>('');
-  producto_id = signal<string>('');
+  modoFiltro = signal<'mes' | 'semestre' | 'rango'>('mes');
+  fechaReferencia = signal<Date>(new Date());
+  rangoInicio = signal<string>(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  rangoFin = signal<string>(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
-  // Datos para los selectores
-  clientes = signal<any[]>([]);
-  productos = signal<any[]>([]);
-  metodosPago = signal<any[]>([]);
-
+  // Datos crudos desde Supabase
   ventas = signal<any[]>([]);
-  cargando = signal<boolean>(false);
+  compras = signal<any[]>([]);
+  activos = signal<any[]>([]);
+
+  // --- MATEMÁTICA FINANCIERA (Se calcula sola) ---
+
+  // 1. Ingresos y Deudas
+  ingresosReales = computed(() => this.ventas().reduce((acc, v) => acc + (Number(v.valor_pagado) || 0), 0));
+  dineroEnCalle = computed(() => this.ventas().reduce((acc, v) => acc + Math.max(0, (Number(v.precio_total) || 0) - (Number(v.valor_pagado) || 0)), 0));
+
+  // 2. Gastos (Insumos vs Activos)
+  gastosInsumos = computed(() => this.compras().reduce((acc, c) => acc + (Number(c.total_pagado) || 0), 0));
+  gastosActivos = computed(() => this.activos().reduce((acc, a) => acc + (Number(a.valor) || 0), 0));
+  egresosTotales = computed(() => this.gastosInsumos() + this.gastosActivos());
+
+  // 3. El Balance Final
+  utilidadNeta = computed(() => this.ingresosReales() - this.egresosTotales());
+
+  // 4. Mini-Historial (Últimos 15 movimientos)
+  ultimosMovimientos = computed(() => {
+    const v = this.ventas().map(x => ({
+      tipo: 'ingreso',
+      fecha: x.fecha,
+      monto: x.valor_pagado,
+      titulo: 'Venta - ' + (x.producto?.nombre || 'Producto'),
+      icono: x.producto?.icono || '💰'
+    }));
+
+    const c = this.compras().map(x => ({
+      tipo: 'egreso',
+      fecha: x.fecha,
+      monto: x.total_pagado,
+      titulo: 'Compra Insumos (' + (x.proveedor?.nombre || 'Varios') + ')',
+      icono: '🛒'
+    }));
+
+    const a = this.activos().map(x => ({
+      tipo: 'egreso',
+      fecha: x.fecha_adquisicion,
+      monto: x.valor,
+      titulo: 'Inversión - ' + x.nombre,
+      icono: '📦'
+    }));
+
+    const todos = [...v, ...c, ...a].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+    return todos.slice(0, 15);
+  });
 
   async ngOnInit() {
-    const [c, p, m] = await Promise.all([
-      this.supabase.obtenerClientes(),
-      this.supabase.obtenerProductosActivos(),
-      this.supabase.obtenerMetodosPago()
-    ]);
-    if (c.data) this.clientes.set(c.data);
-    if (p.data) this.productos.set(p.data);
-    if (m.data) this.metodosPago.set(m.data);
+    await this.aplicarFiltros();
   }
 
-  async buscar() {
+  // --- LÓGICA DE FILTRADO ---
+  cambiarModo(modo: 'mes' | 'semestre' | 'rango') {
+    this.modoFiltro.set(modo);
+    if (modo !== 'rango') {
+      this.aplicarFiltros();
+    }
+  }
+
+  cambiarMes(delta: number) {
+    const nuevaFecha = delta > 0 ? addMonths(this.fechaReferencia(), 1) : subMonths(this.fechaReferencia(), 1);
+    this.fechaReferencia.set(nuevaFecha);
+    this.aplicarFiltros();
+  }
+
+  async aplicarFiltros() {
+    let inicio: Date;
+    let fin: Date;
+
+    if (this.modoFiltro() === 'mes') {
+      inicio = startOfMonth(this.fechaReferencia());
+      fin = endOfMonth(this.fechaReferencia());
+    } else if (this.modoFiltro() === 'semestre') {
+      fin = new Date();
+      inicio = subMonths(fin, 6);
+    } else {
+      inicio = new Date(this.rangoInicio() + 'T00:00:00');
+      fin = new Date(this.rangoFin() + 'T23:59:59');
+    }
+
+    await this.cargarBalance(inicio, fin);
+  }
+
+  async cargarBalance(inicio: Date, fin: Date) {
     this.cargando.set(true);
-    const { data } = await this.supabase.buscarVentas({
-      desde: this.desde() ? `${this.desde()}T00:00:00Z` : undefined,
-      hasta: this.hasta() ? `${this.hasta()}T23:59:59Z` : undefined,
-      estado: this.estado() || undefined,
-      cliente_id: this.cliente_id() || undefined,
-      metodo_pago_id: this.metodo_pago_id() || undefined,
-      producto_id: this.producto_id() || undefined
-    });
-    if (data) this.ventas.set(data);
-    this.cargando.set(false);
-  }
 
-  editarVenta(venta: any) {
-    this.router.navigate(['/pos'], { queryParams: { editar: venta.id } });
+    const { ventas, compras, activos, errores } = await this.supabase.obtenerBalanceFinanciero(inicio, fin);
+
+    if (errores) console.error('Error cargando el balance', errores);
+
+    this.ventas.set(ventas || []);
+    this.compras.set(compras || []);
+    this.activos.set(activos || []);
+
+    this.cargando.set(false);
   }
 }

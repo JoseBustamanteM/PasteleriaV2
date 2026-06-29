@@ -56,9 +56,9 @@ export class SupabaseService {
     return await this.client
       .from('venta')
       // AQUÍ ESTÁ LA MAGIA: Le pedimos el precio, lo pagado y el ícono del producto
-      .select('fecha, estado, precio_total, valor_pagado, producto(nombre, icono)') 
-      .gte('fecha', inicioIso) 
-      .lte('fecha', finIso);  
+      .select('fecha, estado, precio_total, valor_pagado, producto(nombre, icono)')
+      .gte('fecha', inicioIso)
+      .lte('fecha', finIso);
   }
 
   // Nuevo método para traer el detalle de un solo día
@@ -430,5 +430,52 @@ async obtenerResumenMes(mes: number, anio: number) {
     if (errDetalles) throw errDetalles;
 
     return compraData;
+  }
+
+  // --- MÓDULO DE FINANZAS Y BALANCE ---
+
+// --- MÓDULO DE FINANZAS Y BALANCE ---
+
+  async obtenerBalanceFinanciero(fechaInicio: Date, fechaFin: Date) {
+    const inicioIso = fechaInicio.toISOString();
+    const finIso = fechaFin.toISOString();
+
+    // 1. Ingresos (Ventas)
+    const ventasPromesa = this.client
+      .from('venta')
+      .select('id, fecha, precio_total, valor_pagado, estado, producto(nombre, icono)')
+      .gte('fecha', inicioIso)
+      .lte('fecha', finIso)
+      .order('fecha', { ascending: false });
+
+    // 2. Gastos en Insumos (Compras) -> Usando 'fecha' y 'total_pagado' según tu BD
+    const comprasPromesa = this.client
+      .from('compra')
+      .select(`id, fecha, total_pagado, proveedor(nombre)`)
+      .gte('fecha', inicioIso)
+      .lte('fecha', finIso)
+      .order('fecha', { ascending: false });
+
+    // 3. Inversiones (Activos Fijos) -> Usando 'fecha_adquisicion' y 'valor' según tu BD
+    const activosPromesa = this.client
+      .from('activo_fijo')
+      .select('id, nombre, valor, fecha_adquisicion')
+      .gte('fecha_adquisicion', inicioIso)
+      .lte('fecha_adquisicion', finIso)
+      .order('fecha_adquisicion', { ascending: false });
+
+    // Ejecutamos las 3 consultas al mismo tiempo en paralelo
+    const [ventasRes, comprasRes, activosRes] = await Promise.all([
+      ventasPromesa,
+      comprasPromesa,
+      activosPromesa
+    ]);
+
+    return {
+      ventas: ventasRes.data || [],
+      compras: comprasRes.data || [],
+      activos: activosRes.data || [],
+      errores: ventasRes.error || comprasRes.error || activosRes.error
+    };
   }
 }
