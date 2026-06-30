@@ -19,6 +19,10 @@ export class PosComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+
+  textoBusquedaCliente = signal('');
+  mostrarDropdownClientes = signal(false);
+
   totalVendido = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + v.cantidad, 0));
 
   totalEntregado = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + (v.entregado ? v.cantidad : 0), 0));
@@ -26,6 +30,8 @@ export class PosComponent implements OnInit {
   totalDineroVendido = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + (v.precio_total || 0), 0));
 
   totalDeuda = computed(() => this.ventasDelProducto().reduce((acc, v) => acc + Math.max(0, (v.precio_total || 0) - (v.valor_pagado || 0)), 0));
+
+  clienteSeleccionado = signal<any>(null);
 
   paso = signal<'fecha' | 'catalogo' | 'lista-producto' | 'venta'>('fecha');
   fechaSeleccionada = signal<string>(format(new Date(), 'yyyy-MM-dd'));
@@ -170,9 +176,7 @@ export class PosComponent implements OnInit {
     this.formCantidad.set(nuevaCantidad);
     const nuevoTotal = nuevaCantidad * this.productoSeleccionado()!.precio_base;
     this.formPrecioTotal.set(nuevoTotal);
-    if (!this.editandoId()) {
-      this.formValorPagado.set(nuevoTotal);
-    }
+
   }
 
   // --- NUEVO: GUARDAR CLIENTE RÁPIDO ---
@@ -289,5 +293,36 @@ async confirmarVenta() {
       alert('Error al actualizar pago: ' + error.message);
       await this.cargarVentasDelProducto();
     }
+  }
+
+  clientesFiltrados = computed(() => {
+    const texto = this.textoBusquedaCliente().toLowerCase().trim();
+    const todos = this.clientes(); // <--- OJO: Usa tu variable real de clientes aquí
+
+    if (!texto) return todos;
+    return todos.filter(c => c.nombre_completo.toLowerCase().includes(texto));
+  });
+
+  buscarCliente(texto: string) {
+    this.textoBusquedaCliente.set(texto);
+    this.mostrarDropdownClientes.set(true); // Abre la lista al escribir
+  }
+
+ seleccionarCliente(cliente: any) {
+    this.clienteSeleccionado.set(cliente);
+
+    // 1. Actualizamos lo que el usuario ve escrito en el buscador
+    this.textoBusquedaCliente.set(cliente ? cliente.nombre_completo : '');
+
+    // 2. Cerramos la lista flotante
+    this.mostrarDropdownClientes.set(false);
+
+    // 3. ¡LA CONEXIÓN REAL! Guardamos el ID en tu formulario para la base de datos
+    // Si elige general (null), lo dejamos vacío ('') como lo tenías originalmente
+    this.formClienteId.set(cliente ? cliente.id : '');
+  }
+
+  limpiarCliente() {
+    this.seleccionarCliente(null);
   }
 }
