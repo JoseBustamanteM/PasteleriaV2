@@ -9,7 +9,7 @@ import { startOfMonth, endOfMonth, addMonths, subMonths, format } from 'date-fns
   standalone: true,
   imports: [CommonModule, FormsModule], // Agregamos FormsModule aquí
   templateUrl: './historial-ventas.component.html',
-  host: { 'class': 'block h-full w-full bg-gray-50' }
+  host: { 'class': 'block' }
 })
 export class HistorialVentasComponent implements OnInit {
   private supabase = inject(SupabaseService);

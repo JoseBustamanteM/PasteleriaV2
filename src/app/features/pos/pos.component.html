@@ -1,359 +1,388 @@
-<div class="h-full flex flex-col p-4 max-w-3xl mx-auto">
+<div class="min-h-full flex flex-col px-4 pt-4">
 
+  <!-- PASO 1: ELEGIR FECHA -->
   @if (paso() === 'fecha') {
-    <div class="flex-1 flex flex-col items-center justify-center animate-fade-in">
-      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 w-full max-w-sm text-center">
-        <div class="text-6xl mb-4">📅</div>
-        <h2 class="text-2xl font-black text-gris-oscuro mb-2">Día de Venta</h2>
-        <p class="text-gray-500 text-sm mb-6">Selecciona el día en el que ocurrieron estas ventas.</p>
+    <div class="flex-1 flex flex-col items-center justify-center py-8 animate-fade-in">
+      <div class="tarjeta rounded-[28px] p-7 w-full max-w-sm text-center flex flex-col items-center">
+        <span class="w-16 h-16 rounded-full bg-frambuesa-100 text-frambuesa-600 flex items-center justify-center mb-4">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+        </span>
+        <h1 class="text-2xl font-black text-cacao-800 mb-1">Día de venta</h1>
+        <p class="text-cacao-500 text-sm font-semibold mb-6">¿Qué día ocurrieron estas ventas?</p>
 
-        <input
-          type="date"
-          [(ngModel)]="fechaSeleccionada"
-          class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-lg rounded-xl focus:ring-cereza focus:border-cereza block p-3 mb-6 text-center"
-        />
+        <label for="fecha-venta" class="sr-only">Fecha de venta</label>
+        <input id="fecha-venta" type="date" [(ngModel)]="fechaSeleccionada" class="campo text-lg text-center mb-5" />
 
-        <button
-          (click)="irACatalogo()"
-          class="w-full bg-cereza hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors active:scale-95">
-          Continuar al Catálogo
+        <button (click)="irACatalogo()" class="btn-primario w-full min-h-[52px] text-base">
+          Continuar al catálogo
         </button>
       </div>
     </div>
   }
 
+  <!-- PASO 2: CATÁLOGO -->
   @if (paso() === 'catalogo') {
-    <div class="animate-fade-in flex-1 flex flex-col h-full">
-      <div class="mb-6 flex items-center gap-3">
-        <button (click)="volverDesdeCatalogo()" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+    <div class="flex-1 flex flex-col animate-fade-in">
+      <header class="flex items-center gap-2.5 mb-5">
+        <button (click)="volverDesdeCatalogo()" class="btn-icono" aria-label="Volver">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div>
-          <h1 class="text-xl font-black text-gris-oscuro">Seleccionar Producto</h1>
-          <p class="text-cereza text-sm font-bold capitalize">{{ fechaSeleccionada() | date:'fullDate':'':'es' }}</p>
+          <p class="text-[13px] font-extrabold text-frambuesa-600 first-letter:uppercase">{{ fechaSeleccionada() | date:'fullDate':'':'es' }}</p>
+          <h1 class="text-xl font-black text-cacao-800">¿Qué vendiste?</h1>
         </div>
-      </div>
+      </header>
 
-      <div class="flex-1 overflow-y-auto pb-24">
-        @if (cargando()) {
-          <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cereza"></div></div>
-        } @else {
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            @for (producto of productos(); track producto.id) {
-              <button
-                (click)="irAListaProducto(producto)"
-                class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md hover:border-red-100 hover:bg-red-50 transition-all flex flex-col items-center justify-center gap-3 active:scale-95">
-                <div class="text-5xl bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center shadow-inner">
-                  {{ producto.icono }}
-                </div>
-                <div class="text-center">
-                  <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1">{{ producto.nombre }}</h3>
-                  <p class="text-cereza font-black text-sm">{{ producto.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-                </div>
-              </button>
-            }
-          </div>
-        }
-      </div>
+      @if (cargando()) {
+        <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-frambuesa-600"></div></div>
+      } @else {
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 pb-4">
+          @for (producto of productos(); track producto.id) {
+            <button (click)="irAListaProducto(producto)"
+                    class="tarjeta p-4 flex flex-col items-center gap-3 hover:bg-frambuesa-50 active:scale-95 transition-all">
+              <span class="w-20 h-20 rounded-full bg-crema flex items-center justify-center text-5xl">{{ producto.icono }}</span>
+              <span class="text-center">
+                <span class="block font-extrabold text-cacao-800 text-sm leading-tight mb-1">{{ producto.nombre }}</span>
+                <span class="block text-frambuesa-600 font-black text-sm">{{ producto.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+              </span>
+            </button>
+          }
+        </div>
+      }
     </div>
   }
 
+  <!-- PASO 3: VENTAS DEL PRODUCTO EN EL DÍA -->
   @if (paso() === 'lista-producto') {
-    <div class="animate-fade-in flex-1 flex flex-col h-full">
-      <div class="mb-6 flex items-center gap-3">
-        <button (click)="volver('catalogo')" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+    <div class="flex-1 flex flex-col animate-fade-in pb-24">
+      <header class="flex items-center gap-2.5 mb-3">
+        <button (click)="volver('catalogo')" class="btn-icono" aria-label="Volver al catálogo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <div>
-          <h1 class="text-xl font-black text-gris-oscuro">Ventas Registradas</h1>
-          <p class="text-gray-500 text-sm capitalize">{{ fechaSeleccionada() | date:'mediumDate':'':'es' }}</p>
+        <div class="min-w-0">
+          <p class="text-[13px] font-extrabold text-frambuesa-600 first-letter:uppercase">{{ fechaSeleccionada() | date:'fullDate':'':'es' }}</p>
+          <h1 class="text-xl font-black text-cacao-800 truncate">Ventas del día</h1>
         </div>
-      </div>
+      </header>
 
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-4">
-          <div class="text-4xl bg-gray-50 w-14 h-14 rounded-full flex items-center justify-center shrink-0">
-            {{ productoSeleccionado()?.icono }}
-          </div>
-          <div>
-            <h2 class="font-bold text-lg text-gray-800 leading-tight">{{ productoSeleccionado()?.nombre }}</h2>
-            <p class="text-gray-500 text-sm">{{ productoSeleccionado()?.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+      <!-- Resumen del producto -->
+      <section class="tarjeta rounded-[28px] p-3.5 flex flex-col gap-3.5 mb-3">
+        <div class="flex items-center gap-3">
+          <span class="w-[52px] h-[52px] rounded-full bg-crema flex items-center justify-center text-[28px] shrink-0">{{ productoSeleccionado()?.icono }}</span>
+          <div class="min-w-0">
+            <p class="text-base font-black text-cacao-800 truncate">{{ productoSeleccionado()?.nombre }}</p>
+            <p class="text-[13px] font-bold text-cacao-500">{{ productoSeleccionado()?.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }} c/u</p>
           </div>
         </div>
-
-        <button (click)="irAVenta()" class="bg-cereza text-white flex items-center gap-1 font-bold py-2 px-4 rounded-xl hover:bg-red-700 active:scale-95 transition-all shadow-sm text-sm">
-          <span class="text-lg">+</span> Agregar
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto pb-24">
-        @if (cargandoVentas()) {
-          <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cereza"></div></div>
-        } @else if (ventasDelProducto().length === 0) {
-          <div class="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-            <span class="text-3xl opacity-50 mb-2 block">텅</span>
-            <p class="text-gray-400 text-sm">Aún no hay ventas de este producto hoy.</p>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div class="bg-cacao-50 rounded-2xl py-2 px-1 flex flex-col gap-0.5">
+            <span class="text-[11px] font-bold text-cacao-500">Vendidas</span>
+            <span class="text-lg font-black text-cacao-800">{{ totalVendido() }}</span>
           </div>
-        } @else {
+          <div class="bg-cacao-50 rounded-2xl py-2 px-1 flex flex-col gap-0.5">
+            <span class="text-[11px] font-bold text-cacao-500">Entregadas</span>
+            <span class="text-lg font-black" [ngClass]="totalEntregado() === totalVendido() ? 'text-emerald-700' : 'text-amber-700'">{{ totalEntregado() }}/{{ totalVendido() }}</span>
+          </div>
+          <div class="bg-cacao-50 rounded-2xl py-2 px-1 flex flex-col gap-0.5 min-w-0">
+            <span class="text-[11px] font-bold text-cacao-500">Total</span>
+            <span class="text-[15px] font-black text-cacao-800 truncate">{{ totalDineroVendido() | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="rounded-2xl py-2 px-1 flex flex-col gap-0.5 min-w-0" [ngClass]="totalDeuda() > 0 ? 'bg-frambuesa-100' : 'bg-emerald-50'">
+            <span class="text-[11px] font-bold" [ngClass]="totalDeuda() > 0 ? 'text-frambuesa-700' : 'text-emerald-700'">Deuda</span>
+            <span class="text-[15px] font-black truncate" [ngClass]="totalDeuda() > 0 ? 'text-frambuesa-700' : 'text-emerald-700'">{{ totalDeuda() | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+      </section>
 
-          @if (ventasDelProducto().length > 0) {
-  <div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 mb-4 shadow-sm divide-x divide-gray-100">
-
-    <div class="text-center flex-1 px-1">
-      <p class="text-[8px] sm:text-[10px] uppercase font-bold text-gray-400">Vendido</p>
-      <p class="text-sm font-black text-gray-800">{{ totalVendido() }}</p>
-    </div>
-
-    <div class="text-center flex-1 px-1">
-      <p class="text-[8px] sm:text-[10px] uppercase font-bold text-gray-400">Entregado</p>
-      <p class="text-sm font-black transition-colors" [ngClass]="totalEntregado() === totalVendido() ? 'text-green-500' : 'text-orange-500'">
-        {{ totalEntregado() }}
-      </p>
-    </div>
-
-    <div class="text-center flex-1 px-1">
-      <p class="text-[8px] sm:text-[10px] uppercase font-bold text-gray-400">Total</p>
-      <p class="text-sm font-black text-blue-600">{{ totalDineroVendido() | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-    </div>
-
-    <div class="text-center flex-1 px-1">
-      <p class="text-[8px] sm:text-[10px] uppercase font-bold text-gray-400">Deuda</p>
-      <p class="text-sm font-black transition-colors" [ngClass]="totalDeuda() === 0 ? 'text-green-500' : 'text-red-600'">
-        {{ totalDeuda() | currency:'CLP':'symbol-narrow':'1.0-0' }}
-      </p>
-    </div>
-
-  </div>
-}
-          <div class="flex flex-col gap-3">
-            @for (venta of ventasDelProducto(); track venta.id) {
-              <div class="flex flex-col p-3 bg-white rounded-xl border border-gray-100 shadow-sm gap-2">
-
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="text-sm font-semibold text-gray-800">
-                      {{ venta.cantidad }}x <span class="text-gray-500 font-normal">{{ venta.cliente?.nombre_completo || 'Cliente General' }}</span>
+      @if (cargandoVentas()) {
+        <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-frambuesa-600"></div></div>
+      } @else if (ventasDelProducto().length === 0) {
+        <div class="tarjeta py-10 px-6 text-center flex flex-col items-center gap-2">
+          <span class="w-14 h-14 rounded-full bg-cacao-50 text-cacao-400 flex items-center justify-center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </span>
+          <p class="font-extrabold text-cacao-700">Aún no hay ventas</p>
+          <p class="text-sm font-semibold text-cacao-500">Registra la primera con el botón de abajo.</p>
+        </div>
+      } @else {
+        <div class="flex flex-col gap-3">
+          @for (venta of ventasDelProducto(); track venta.id) {
+            <article class="tarjeta p-3.5 flex flex-col gap-3">
+              <div class="flex items-center gap-3">
+                <span class="w-[42px] h-[42px] rounded-full bg-frambuesa-100 text-frambuesa-700 flex items-center justify-center text-[15px] font-black shrink-0">
+                  @if (venta.cliente?.nombre_completo) {
+                    {{ iniciales(venta.cliente.nombre_completo) }}
+                  } @else {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  }
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-base font-extrabold text-cacao-800 truncate">{{ venta.cliente?.nombre_completo || 'Cliente general' }}</p>
+                  <p class="text-[13px] font-bold text-cacao-500">{{ venta.cantidad }} {{ venta.cantidad === 1 ? 'unidad' : 'unidades' }} · {{ venta.precio_total | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+                  @if (venta.valor_pagado > 0) {
+                    <p class="text-[13px] font-bold text-emerald-700">
+                      @if (venta.estado !== 'Pagado') {
+                        Abonó {{ venta.valor_pagado | currency:'CLP':'symbol-narrow':'1.0-0' }} ·
+                      }
+                      {{ nombreMetodo(venta.metodo_pago_id) }}
                     </p>
-                    @if (!venta.entregado) {
-                      <span class="inline-block mt-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold rounded-md uppercase tracking-wider">
-                        ⏳ Entrega Pendiente
-                      </span>
-                    }
+                  }
+                </div>
+                <button (click)="editarVenta(venta)" class="w-11 h-11 rounded-full bg-cacao-50 text-cacao-600 flex items-center justify-center hover:bg-cacao-100 active:scale-95 transition-all shrink-0" aria-label="Editar venta">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                </button>
+              </div>
+
+              @if (cobrandoVentaId() === venta.id) {
+                <!-- Cobro rápido: un toque en el método salda la venta completa -->
+                <div class="bg-cacao-50 rounded-3xl p-2.5 flex flex-col gap-2 animate-fade-in">
+                  <div class="flex items-center justify-between pl-2">
+                    <span class="text-sm font-extrabold text-cacao-700">
+                      Cobrar {{ (venta.precio_total - venta.valor_pagado) | currency:'CLP':'symbol-narrow':'1.0-0' }} con:
+                    </span>
+                    <button (click)="cerrarCobro()" aria-label="Cancelar cobro"
+                            class="w-9 h-9 rounded-full text-cacao-500 hover:bg-white flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                   </div>
-                  <div class="text-right leading-tight">
-                    <p class="text-sm font-bold text-gray-800">{{ venta.precio_total | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-                    @if (venta.estado.toLowerCase() === 'pendiente') {
-                      <p class="text-[10px] text-red-500 font-bold uppercase">Debe {{ (venta.precio_total - venta.valor_pagado) | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-                    } @else {
-                      <p class="text-[10px] text-green-600 font-bold uppercase tracking-wider">Pagado</p>
+                  <div class="flex flex-wrap gap-2">
+                    @for (metodo of metodosPago(); track metodo.id) {
+                      <button (click)="cobrarConMetodo(venta, metodo.id)" [disabled]="guardandoCobro()"
+                              class="flex-1 min-w-[96px] h-11 px-3 rounded-full bg-frambuesa-600 text-white text-sm font-extrabold hover:bg-frambuesa-700 active:scale-95 transition-all disabled:opacity-50">
+                        {{ metodo.nombre }}
+                      </button>
                     }
                   </div>
                 </div>
-
-                <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-
-  <div class="flex items-center gap-3">
-
-    <label class="flex items-center gap-1.5 cursor-pointer group">
-      <div class="relative w-4 h-4 rounded border-2 transition-colors flex items-center justify-center shrink-0"
-           [ngClass]="venta.entregado ? 'bg-green-500 border-green-500' : 'bg-gray-50 border-gray-300 group-hover:border-gray-400'">
-        <input type="checkbox" class="absolute opacity-0 w-full h-full cursor-pointer"
-               [checked]="venta.entregado"
-               (change)="marcarComoEntregado(venta, $any($event.target).checked)">
-        @if (venta.entregado) {
-          <svg class="w-3 h-3 text-white pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        }
-      </div>
-      <span class="text-[9px] font-bold uppercase tracking-wider transition-colors"
-            [ngClass]="venta.entregado ? 'text-green-600' : 'text-gray-400'">
-        {{ venta.entregado ? 'Entregado' : 'Pendiente' }}
-      </span>
-    </label>
-
-    <label class="flex items-center gap-1.5 cursor-pointer group">
-      <div class="relative w-4 h-4 rounded border-2 transition-colors flex items-center justify-center shrink-0"
-           [ngClass]="venta.estado === 'Pagado' ? 'bg-green-500 border-green-500' : 'bg-red-50 border-red-300 group-hover:border-red-400'">
-        <input type="checkbox" class="absolute opacity-0 w-full h-full cursor-pointer"
-               [checked]="venta.estado === 'Pagado'"
-               (change)="marcarComoPagado(venta, $any($event.target).checked)">
-        @if (venta.estado === 'Pagado') {
-          <svg class="w-3 h-3 text-white pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        }
-      </div>
-      <span class="text-[9px] font-bold uppercase tracking-wider transition-colors"
-            [ngClass]="venta.estado === 'Pagado' ? 'text-green-600' : 'text-red-500'">
-        {{ venta.estado === 'Pagado' ? 'Pagado' : 'Debe ' + (venta.precio_total - venta.valor_pagado | currency:'CLP':'symbol-narrow':'1.0-0') }}
-      </span>
-    </label>
-
-  </div>
-
-  <div class="flex items-center gap-2">
-    <button (click)="editarVenta(venta)" class="flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1.5 rounded-lg font-bold text-[10px] hover:bg-blue-100 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg>
-      Modificar
-    </button>
-
-    <button (click)="eliminarVenta(venta)" class="flex items-center gap-1 text-red-600 font-bold text-[10px] hover:text-red-700 transition-colors p-1">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-    </button>
-  </div>
-
-</div>
-
-              </div>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  @if (paso() === 'venta') {
-    <div class="animate-fade-in flex-1 flex flex-col h-full">
-      <div class="mb-6 flex items-center gap-3">
-        <button (click)="volver('lista-producto')" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-        </button>
-        <div>
-          <h1 class="text-xl font-black text-gris-oscuro">{{ editandoId() ? 'Editar' : 'Agregar' }} {{ productoSeleccionado()?.nombre }}</h1>
-          <p class="text-gray-500 text-sm capitalize">{{ fechaSeleccionada() | date:'mediumDate':'':'es' }}</p>
-        </div>
-      </div>
-
-      <div class="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-gray-200 overflow-y-auto pb-24">
-        <div class="flex flex-col gap-5">
-
-
-
-
-
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Cantidad Vendida</label>
-            <div class="flex items-center gap-4">
-              <button (click)="cambiarCantidad(-1)" class="w-12 h-12 rounded-xl bg-gray-100 text-gray-600 font-bold text-xl hover:bg-gray-200 active:scale-95 transition-all">-</button>
-              <div class="flex-1 text-center text-3xl font-black text-gray-800">{{ formCantidad() }}</div>
-              <button (click)="cambiarCantidad(1)" class="w-12 h-12 rounded-xl bg-gray-100 text-gray-600 font-bold text-xl hover:bg-gray-200 active:scale-95 transition-all">+</button>
-            </div>
-          </div>
-
-           <div>
-            <div class="flex justify-between items-end mb-2">
-              <label class="block text-sm font-bold text-gray-700">Cliente <span class="text-gray-400 font-normal">(Opcional)</span></label>
-              @if (!creandoCliente()) {
-                <button (click)="creandoCliente.set(true)" class="text-xs font-bold text-cereza hover:text-red-700 bg-red-50 px-2 py-1 rounded-md transition-colors shadow-sm border border-red-100">+ Nuevo</button>
-              }
-            </div>
-
-            @if (creandoCliente()) {
-              <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 mb-2 flex items-center gap-2 animate-fade-in shadow-inner">
-                <input type="text" [(ngModel)]="nuevoClienteNombre" placeholder="Nombre completo..." class="flex-1 bg-white border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-cereza focus:border-cereza block p-2.5 font-medium">
-
-                <button (click)="guardarNuevoCliente()" [disabled]="!nuevoClienteNombre().trim() || guardandoCliente()" class="bg-gray-800 text-white p-2.5 rounded-lg hover:bg-black disabled:opacity-50 transition-all shadow-sm">
-                  @if (guardandoCliente()) {
-                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              } @else {
+              <div class="flex gap-2">
+                <button (click)="marcarComoEntregado(venta, !venta.entregado)" [attr.aria-pressed]="venta.entregado"
+                        class="flex-1 h-11 rounded-full text-sm font-extrabold transition-all active:scale-95"
+                        [ngClass]="venta.entregado ? 'bg-emerald-50 text-emerald-800' : 'bg-white border-2 border-amber-300 text-amber-800'">
+                  {{ venta.entregado ? '✓ Entregado' : 'Por entregar' }}
+                </button>
+                <button (click)="venta.estado === 'Pagado' ? marcarComoPagado(venta, false) : abrirCobro(venta)" [attr.aria-pressed]="venta.estado === 'Pagado'"
+                        class="flex-1 h-11 rounded-full text-sm font-extrabold transition-all active:scale-95"
+                        [ngClass]="venta.estado === 'Pagado' ? 'bg-emerald-50 text-emerald-800' : 'bg-frambuesa-600 text-white'">
+                  @if (venta.estado === 'Pagado') {
+                    ✓ Pagado
                   } @else {
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                    Cobrar {{ (venta.precio_total - venta.valor_pagado) | currency:'CLP':'symbol-narrow':'1.0-0' }}
                   }
                 </button>
-
-                <button (click)="creandoCliente.set(false)" class="bg-gray-200 text-gray-500 p-2.5 rounded-lg hover:bg-gray-300 hover:text-gray-700 transition-all">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
               </div>
-            } @else {
-              <div class="relative w-full">
+              }
+            </article>
+          }
+        </div>
+      }
 
-  <div class="relative flex items-center">
-    <input type="text"
-           [ngModel]="textoBusquedaCliente()"
-           (ngModelChange)="buscarCliente($event)"
-           (focus)="mostrarDropdownClientes.set(true)"
-           placeholder="-- Cliente General / Anónimo --"
-           class="w-full bg-white border border-gray-200 text-gray-700 rounded-lg py-2 px-3 text-sm outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-all cursor-text shadow-sm"
-           autocomplete="off">
-
-    @if (clienteSeleccionado()) {
-      <button (click)="limpiarCliente()" class="absolute right-3 text-gray-400 hover:text-red-500 bg-white pl-2">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      <!-- Botón flotante para agregar venta (encima de la cápsula de navegación) -->
+      <button (click)="irAVenta()"
+              class="btn-primario fixed z-40 left-1/2 -translate-x-1/2 bottom-[96px] w-[calc(100%-32px)] max-w-md min-h-[56px] text-[17px] font-black shadow-frambuesa">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        Nueva venta
       </button>
-    } @else {
-      <svg class="absolute right-3 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
-    }
-  </div>
-
-  @if (mostrarDropdownClientes()) {
-
-    <div class="fixed inset-0 z-40" (click)="mostrarDropdownClientes.set(false)"></div>
-
-    <div class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-
-      <div (click)="seleccionarCliente(null)"
-           class="px-3 py-2.5 border-b border-gray-100 hover:bg-red-50 cursor-pointer text-sm font-medium text-gray-500 transition-colors">
-        -- Cliente General / Anónimo --
-      </div>
-
-      @for (cliente of clientesFiltrados(); track cliente.id) {
-        <div (click)="seleccionarCliente(cliente)"
-             class="px-3 py-2.5 border-b border-gray-50 hover:bg-red-50 cursor-pointer text-sm font-bold text-gray-800 transition-colors">
-          {{ cliente.nombre_completo }}
-        </div>
-      }
-
-      @if (clientesFiltrados().length === 0) {
-        <div class="px-3 py-4 text-center text-sm font-medium text-gray-400">
-          No se encontraron clientes
-        </div>
-      }
     </div>
   }
-</div>
+
+  <!-- PASO 4: FORMULARIO DE VENTA -->
+  @if (paso() === 'venta') {
+    <div class="flex-1 flex flex-col animate-fade-in pb-6">
+      <header class="flex items-center gap-2.5 mb-4">
+        <button (click)="volver('lista-producto')" class="btn-icono" aria-label="Volver a la lista">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="min-w-0">
+          <p class="text-[13px] font-extrabold text-frambuesa-600 first-letter:uppercase">{{ fechaSeleccionada() | date:'fullDate':'':'es' }}</p>
+          <h1 class="text-xl font-black text-cacao-800 truncate">{{ editandoId() ? 'Editar venta' : 'Nueva venta' }}</h1>
+        </div>
+      </header>
+
+      <div class="tarjeta rounded-[28px] p-5 flex flex-col gap-5">
+
+        <!-- Producto -->
+        <div class="flex items-center gap-3">
+          <span class="w-12 h-12 rounded-full bg-crema flex items-center justify-center text-2xl shrink-0">{{ productoSeleccionado()?.icono }}</span>
+          <div class="min-w-0">
+            <p class="font-black text-cacao-800 truncate">{{ productoSeleccionado()?.nombre }}</p>
+            <p class="text-[13px] font-bold text-cacao-500">{{ productoSeleccionado()?.precio_base | currency:'CLP':'symbol-narrow':'1.0-0' }} c/u</p>
+          </div>
+        </div>
+
+        <!-- Cantidad -->
+        <div>
+          <span class="etiqueta">Cantidad</span>
+          <div class="flex items-center gap-4 bg-cacao-50 rounded-full p-1.5">
+            <button (click)="cambiarCantidad(-1)" aria-label="Restar uno" class="w-12 h-12 rounded-full bg-white text-cacao-700 shadow-suave flex items-center justify-center active:scale-95 transition-all">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M5 12h14"/></svg>
+            </button>
+            <div class="flex-1 text-center text-3xl font-black text-cacao-800">{{ formCantidad() }}</div>
+            <button (click)="cambiarCantidad(1)" aria-label="Sumar uno" class="w-12 h-12 rounded-full bg-frambuesa-600 text-white flex items-center justify-center active:scale-95 transition-all">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cliente -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-extrabold text-cacao-700">Cliente <span class="text-cacao-400 font-semibold">(opcional)</span></span>
+            @if (!creandoCliente()) {
+              <button (click)="creandoCliente.set(true)" class="min-h-[36px] px-3 rounded-full bg-frambuesa-50 text-frambuesa-700 text-xs font-extrabold hover:bg-frambuesa-100 transition-colors">+ Nuevo cliente</button>
             }
           </div>
 
-          <hr class="border-gray-100">
+          @if (creandoCliente()) {
+            <div class="bg-cacao-50 p-2 rounded-3xl flex items-center gap-2 animate-fade-in">
+              <label for="nuevo-cliente" class="sr-only">Nombre del nuevo cliente</label>
+              <input id="nuevo-cliente" type="text" [(ngModel)]="nuevoClienteNombre" placeholder="Nombre completo..." class="campo bg-white flex-1 min-w-0">
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Total ($)</label>
-              <input type="number" [(ngModel)]="formPrecioTotal" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg">
+              <button (click)="guardarNuevoCliente()" [disabled]="!nuevoClienteNombre().trim() || guardandoCliente()" aria-label="Guardar cliente"
+                      class="w-12 h-12 rounded-full bg-cacao-800 text-white flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95 transition-all">
+                @if (guardandoCliente()) {
+                  <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                } @else {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.75l6 6 9-13.5"/></svg>
+                }
+              </button>
+
+              <button (click)="creandoCliente.set(false)" aria-label="Cancelar"
+                      class="w-12 h-12 rounded-full bg-white text-cacao-500 flex items-center justify-center shrink-0 hover:text-cacao-700 active:scale-95 transition-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
             </div>
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">Cliente Pagó ($)</label>
-              <input type="number" [(ngModel)]="formValorPagado" class="w-full bg-gray-50 border border-gray-200 text-gray-800 font-bold rounded-xl focus:ring-cereza focus:border-cereza block p-3 text-lg" [class.text-red-600]="formValorPagado() < formPrecioTotal()">
+          } @else {
+            <div class="relative w-full">
+              <div class="relative flex items-center">
+                <label for="buscar-cliente" class="sr-only">Buscar cliente</label>
+                <input id="buscar-cliente" type="text"
+                       [ngModel]="textoBusquedaCliente()"
+                       (ngModelChange)="buscarCliente($event)"
+                       (focus)="mostrarDropdownClientes.set(true)"
+                       placeholder="Cliente general / anónimo"
+                       class="campo pr-12"
+                       autocomplete="off">
+
+                @if (clienteSeleccionado()) {
+                  <button (click)="limpiarCliente()" aria-label="Quitar cliente" class="absolute right-1.5 w-10 h-10 rounded-full text-cacao-400 hover:text-frambuesa-600 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                } @else {
+                  <svg class="absolute right-4 w-4 h-4 text-cacao-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                }
+              </div>
+
+              @if (mostrarDropdownClientes()) {
+                <div class="fixed inset-0 z-40" (click)="mostrarDropdownClientes.set(false)"></div>
+
+                <div class="absolute z-50 w-full mt-2 bg-white rounded-3xl shadow-flotante max-h-56 overflow-y-auto p-1.5">
+                  <button (click)="seleccionarCliente(null)"
+                          class="w-full text-left px-4 min-h-[44px] rounded-2xl hover:bg-frambuesa-50 text-sm font-semibold text-cacao-500 transition-colors">
+                    Cliente general / anónimo
+                  </button>
+
+                  @for (cliente of clientesFiltrados(); track cliente.id) {
+                    <button (click)="seleccionarCliente(cliente)"
+                            class="w-full text-left px-4 min-h-[44px] rounded-2xl hover:bg-frambuesa-50 text-sm font-extrabold text-cacao-800 transition-colors">
+                      {{ cliente.nombre_completo }}
+                    </button>
+                  }
+
+                  @if (clientesFiltrados().length === 0) {
+                    <p class="px-4 py-4 text-center text-sm font-semibold text-cacao-400">No se encontraron clientes</p>
+                  }
+                </div>
+              }
             </div>
-          </div>
-
-
-
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Método de Pago</label>
-            <select [(ngModel)]="formMetodoPagoId" class="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-cereza focus:border-cereza block p-3">
-              @for (metodo of metodosPago(); track metodo.id) { <option [value]="metodo.id">{{ metodo.nombre }}</option> }
-            </select>
-          </div>
-
-
-
-          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none mt-2" (click)="formEntregado.set(!formEntregado())">
-            <div>
-              <p class="font-bold text-gray-700 text-sm">¿Producto Entregado?</p>
-              <p class="text-xs text-gray-500 mt-0.5">Marca si el cliente ya se llevó el pastel.</p>
-            </div>
-            <div class="relative w-14 h-8 transition-colors duration-300 ease-in-out rounded-full shadow-inner" [ngClass]="formEntregado() ? 'bg-green-500' : 'bg-gray-300'">
-              <span class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ease-in-out shadow-sm" [ngClass]="formEntregado() ? 'translate-x-6' : 'translate-x-0'"></span>
-            </div>
-          </div>
-
+          }
         </div>
 
-        <button (click)="confirmarVenta()" [disabled]="guardando()" class="w-full mt-8 bg-gray-800 hover:bg-black text-white font-bold py-4 px-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
-          @if (guardando()) {
-            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Procesando...
+        <!-- Total -->
+        <div>
+          <label for="total-venta" class="etiqueta">Total</label>
+          <input id="total-venta" type="number" inputmode="numeric" [(ngModel)]="formPrecioTotal" class="campo text-lg font-black">
+        </div>
+
+        <!-- ¿Cómo pagó? -->
+        <div>
+          <span class="etiqueta">¿Cómo pagó?</span>
+          <div class="grid grid-cols-3 gap-2 bg-cacao-50 rounded-full p-1">
+            <button type="button" (click)="cambiarModoPago('nada')" [attr.aria-pressed]="formModoPago() === 'nada'"
+                    class="min-h-[44px] rounded-full text-[13px] font-extrabold transition-all"
+                    [ngClass]="formModoPago() === 'nada' ? 'bg-frambuesa-600 text-white shadow-suave' : 'text-cacao-600'">
+              Aún no paga
+            </button>
+            <button type="button" (click)="cambiarModoPago('abono')" [attr.aria-pressed]="formModoPago() === 'abono'"
+                    class="min-h-[44px] rounded-full text-[13px] font-extrabold transition-all"
+                    [ngClass]="formModoPago() === 'abono' ? 'bg-amber-500 text-cacao-900 shadow-suave' : 'text-cacao-600'">
+              Abonó
+            </button>
+            <button type="button" (click)="cambiarModoPago('todo')" [attr.aria-pressed]="formModoPago() === 'todo'"
+                    class="min-h-[44px] rounded-full text-[13px] font-extrabold transition-all"
+                    [ngClass]="formModoPago() === 'todo' ? 'bg-emerald-600 text-white shadow-suave' : 'text-cacao-600'">
+              Pagó todo
+            </button>
+          </div>
+
+          @if (formModoPago() === 'abono') {
+            <div class="mt-3 animate-fade-in">
+              <label for="pagado-venta" class="etiqueta">¿Cuánto abonó?</label>
+              <input id="pagado-venta" type="number" inputmode="numeric" min="0" [max]="formPrecioTotal()"
+                     [(ngModel)]="formValorPagado" placeholder="0" class="campo text-lg font-black">
+            </div>
+          }
+
+          @if (deudaFormulario() > 0) {
+            <p class="mt-2 text-sm font-extrabold text-frambuesa-600">
+              Quedará debiendo {{ deudaFormulario() | currency:'CLP':'symbol-narrow':'1.0-0' }}
+            </p>
           } @else {
-            <span>💾 {{ editandoId() ? 'Actualizar Venta' : 'Guardar Venta' }}</span>
+            <p class="mt-2 text-sm font-extrabold text-emerald-700">Venta saldada</p>
+          }
+        </div>
+
+        <!-- Método de pago: solo si pagó algo -->
+        @if (formModoPago() !== 'nada') {
+          <div class="animate-fade-in">
+            <span class="etiqueta">Método de pago</span>
+            <div class="flex flex-wrap gap-2">
+              @for (metodo of metodosPago(); track metodo.id) {
+                <button type="button" (click)="formMetodoPagoId.set(metodo.id)" [attr.aria-pressed]="formMetodoPagoId() === metodo.id"
+                        class="min-h-[44px] px-4 rounded-full text-sm font-extrabold transition-all active:scale-95"
+                        [ngClass]="formMetodoPagoId() === metodo.id ? 'bg-cacao-800 text-white' : 'bg-cacao-50 text-cacao-700'">
+                  {{ metodo.nombre }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Entregado -->
+        <button type="button" (click)="formEntregado.set(!formEntregado())" [attr.aria-pressed]="formEntregado()"
+                class="flex items-center justify-between gap-3 p-4 bg-cacao-50 rounded-3xl text-left">
+          <span>
+            <span class="block font-extrabold text-cacao-800 text-sm">¿Producto entregado?</span>
+            <span class="block text-xs font-semibold text-cacao-500 mt-0.5">Marca si el cliente ya se lo llevó.</span>
+          </span>
+          <span class="relative w-14 h-8 rounded-full transition-colors duration-300 shrink-0" [ngClass]="formEntregado() ? 'bg-emerald-600' : 'bg-cacao-300'">
+            <span class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 shadow-sm" [ngClass]="formEntregado() ? 'translate-x-6' : 'translate-x-0'"></span>
+          </span>
+        </button>
+
+        <button (click)="confirmarVenta()" [disabled]="guardando()" class="btn-primario w-full min-h-[56px] text-base font-black mt-1">
+          @if (guardando()) {
+            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Guardando...
+          } @else {
+            {{ editandoId() ? 'Actualizar venta' : 'Guardar venta' }}
           }
         </button>
+
+        @if (editandoId()) {
+          <button (click)="eliminarVentaEnEdicion()" class="min-h-[44px] rounded-full text-sm font-extrabold text-frambuesa-700 hover:bg-frambuesa-50 transition-colors">
+            Eliminar esta venta
+          </button>
+        }
       </div>
     </div>
   }

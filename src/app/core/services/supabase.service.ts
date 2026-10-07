@@ -175,7 +175,7 @@ export class SupabaseService {
     return await this.client
       .from('venta')
       .select(`
-        id, fecha, precio_total, valor_pagado, estado, producto_id,
+        id, fecha, cantidad, precio_total, valor_pagado, estado, producto_id,
         producto ( nombre, icono ),
         cliente ( id, nombre_completo )
       `)

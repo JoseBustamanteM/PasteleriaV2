@@ -1,9 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, RouterModule } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { SupabaseService } from './core/services/supabase.service';
 
+interface ItemNav {
+  nombre: string;
+  ruta: string;
+  icono: 'inicio' | 'balance' | 'compras' | 'gestion';
+}
 
 @Component({
   selector: 'app-root',
@@ -14,32 +18,26 @@ import { SupabaseService } from './core/services/supabase.service';
 })
 export class App {
   private router = inject(Router);
-  private supabaseService = inject(SupabaseService);
 
+  // Señal para saber si estamos en la vista de login y ocultar la navegación
+  isAuthRoute = signal(this.router.url.includes('/auth'));
 
-  // Usamos una señal para saber si estamos en la vista de login y ocultar la navegación
-  isAuthRoute = this.router.url.includes('/auth') ? () => true : () => false;
+  // Botones de la cápsula de navegación (el botón central de venta va aparte)
+  navIzquierda: ItemNav[] = [
+    { nombre: 'Inicio', ruta: '/dashboard', icono: 'inicio' },
+    { nombre: 'Balance', ruta: '/historial', icono: 'balance' },
+  ];
+  navDerecha: ItemNav[] = [
+    { nombre: 'Compras', ruta: '/compras', icono: 'compras' },
+    { nombre: 'Gestión', ruta: '/gestion', icono: 'gestion' },
+  ];
 
   constructor() {
     // Escuchamos los cambios de ruta para actualizar la interfaz
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      this.isAuthRoute = () => event.urlAfterRedirects.includes('/auth');
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe(event => {
+      this.isAuthRoute.set(event.urlAfterRedirects.includes('/auth'));
     });
-  }
-
-  // Método para el botón de logout del Top Bar
-  async logout() {
-    try {
-      await this.supabaseService.logout();
-      this.router.navigate(['/auth']);
-    } catch (error) {
-      console.error('Error cerrando sesión:', error);
-    }
-  }
-
-  irA(ruta: string) {
-    this.router.navigate([`/${ruta}`]);
   }
 }

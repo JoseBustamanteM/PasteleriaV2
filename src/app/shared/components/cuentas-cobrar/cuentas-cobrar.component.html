@@ -1,93 +1,173 @@
-<div class="flex flex-col h-[80vh] max-h-[600px] bg-gray-50 rounded-2xl overflow-hidden relative">
+<div class="flex flex-col h-dvh sm:h-[85vh] sm:max-h-[720px] bg-cacao-50 overflow-hidden relative">
 
   @if (guardando()) {
-    <div class="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div class="bg-white p-4 rounded-xl shadow-lg flex items-center gap-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
-        <p class="font-bold text-gray-700">Procesando pago...</p>
+    <div class="absolute inset-0 bg-cacao-50/70 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div class="bg-white px-5 py-4 rounded-full shadow-suave flex items-center gap-3">
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-frambuesa-600"></div>
+        <p class="font-extrabold text-cacao-700">Registrando cobro...</p>
       </div>
     </div>
   }
 
-  <div class="p-5 bg-white border-b border-gray-100 flex justify-between items-start sticky top-0 z-10 shadow-sm">
-    <div>
-      <h2 class="text-xl font-black text-gray-800 leading-none mb-2">Cuentas por Cobrar</h2>
-      @if (!cargando()) {
-        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Dinero en la calle</p>
-        <p class="text-3xl font-black text-red-600 leading-none mt-1">{{ totalGlobal() | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-      }
+  <!-- ENCABEZADO -->
+  <header class="px-5 pt-5 pb-4 bg-white shrink-0 flex flex-col gap-3">
+    <div class="flex justify-between items-start gap-3">
+      <div>
+        <h2 class="text-xl font-black text-cacao-800">Cuentas por cobrar</h2>
+        @if (!cargando()) {
+          <p class="text-[32px] leading-tight font-black text-frambuesa-600 tracking-tight">{{ totalGlobal() | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+          <p class="text-sm font-bold text-cacao-500">
+            {{ gruposConCliente().length }} {{ gruposConCliente().length === 1 ? 'cliente' : 'clientes' }} · {{ totalPedidos() }} {{ totalPedidos() === 1 ? 'pedido' : 'pedidos' }}
+          </p>
+        }
+      </div>
+      <button (click)="cerrar()" class="btn-icono bg-cacao-50" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
-    <button (click)="cerrar()" class="p-2 bg-gray-50 text-gray-500 rounded-full hover:bg-gray-200 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-    </button>
-  </div>
 
-  <div class="p-5 flex-1 overflow-y-auto">
+    @if (!cargando() && grupos().length > 1) {
+      <div class="grid grid-cols-2 gap-1 bg-cacao-50 rounded-full p-1" role="group" aria-label="Ordenar">
+        <button (click)="orden.set('monto')" [attr.aria-pressed]="orden() === 'monto'"
+                class="min-h-[40px] rounded-full text-[13px] font-extrabold transition-all"
+                [ngClass]="orden() === 'monto' ? 'bg-white text-cacao-800 shadow-suave' : 'text-cacao-500'">
+          Mayor deuda
+        </button>
+        <button (click)="orden.set('antigua')" [attr.aria-pressed]="orden() === 'antigua'"
+                class="min-h-[40px] rounded-full text-[13px] font-extrabold transition-all"
+                [ngClass]="orden() === 'antigua' ? 'bg-white text-cacao-800 shadow-suave' : 'text-cacao-500'">
+          Más antigua
+        </button>
+      </div>
+    }
+  </header>
+
+  <!-- LISTA -->
+  <div class="flex-1 overflow-y-auto px-4 py-4">
     @if (cargando()) {
-      <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div></div>
-    } @else if (deudas().length === 0) {
-      <div class="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-300">
-        <span class="text-4xl block mb-3 opacity-50">🙌</span>
-        <p class="text-gray-500 font-bold">¡Felicidades!</p>
-        <p class="text-sm text-gray-400 mt-1">Nadie te debe dinero en este momento.</p>
+      <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-frambuesa-600"></div></div>
+    } @else if (grupos().length === 0) {
+      <div class="tarjeta py-10 px-6 text-center flex flex-col items-center gap-2">
+        <span class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        <p class="font-black text-cacao-800">¡Todo al día!</p>
+        <p class="text-sm font-semibold text-cacao-500">Nadie te debe dinero en este momento.</p>
       </div>
     } @else {
       <div class="flex flex-col gap-3 pb-4">
-        @for (grupo of deudas(); track grupo.clienteNombre) {
-          <div class="bg-white border border-red-100 rounded-2xl shadow-sm overflow-hidden">
-            
-            <button (click)="grupo.expandido = !grupo.expandido" class="w-full p-4 flex flex-col gap-2 hover:bg-red-50 transition-colors text-left">
-              
-              <div class="flex items-center gap-3 w-full">
-                <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-black text-lg shrink-0">{{ grupo.clienteNombre.charAt(0) | uppercase }}</div>
-                <div class="min-w-0 flex-1">
-                  <h4 class="font-bold text-gray-800 truncate">{{ grupo.clienteNombre }}</h4>
-                  <p class="text-xs font-bold text-red-500">{{ grupo.ventas.length }} pedido(s)</p>
-                </div>
-              </div>
-              
-              <div class="flex items-center justify-end gap-2 w-full mt-1">
-                <select (click)="$event.stopPropagation()" [(ngModel)]="grupo.metodo_pago_grupo" class="w-auto text-xs bg-gray-50 border border-gray-200 text-gray-700 rounded-lg py-1.5 px-2 font-bold shadow-sm outline-none">
-                  @for (metodo of metodosPago(); track metodo.id) { <option [value]="metodo.id">{{ metodo.nombre }}</option> }
-                </select>
-                <button (click)="saldarTodas(grupo, $event)" class="shrink-0 flex items-center gap-1 text-xs font-bold bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition-colors border border-green-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg> Saldar
+
+        <!-- CLIENTES -->
+        @for (grupo of gruposConCliente(); track grupo.clave) {
+          <article class="tarjeta overflow-hidden">
+            <div class="p-3.5 flex flex-col gap-3">
+              <button (click)="alternarDetalle(grupo.clave)" [attr.aria-expanded]="estaExpandido(grupo.clave)"
+                      class="flex items-center gap-3 text-left w-full">
+                <span class="w-[42px] h-[42px] rounded-full bg-frambuesa-100 text-frambuesa-700 flex items-center justify-center text-[15px] font-black shrink-0">
+                  {{ iniciales(grupo.clienteNombre) }}
+                </span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-base font-extrabold text-cacao-800 truncate">{{ grupo.clienteNombre }}</span>
+                  <span class="flex items-center gap-1.5 mt-0.5">
+                    <span class="text-[13px] font-bold text-cacao-500">{{ grupo.pedidos.length }} {{ grupo.pedidos.length === 1 ? 'pedido' : 'pedidos' }}</span>
+                    <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full" [ngClass]="claseAntiguedad(grupo.fechaMasAntigua)">
+                      {{ textoAntiguedad(grupo.fechaMasAntigua) }}
+                    </span>
+                  </span>
+                </span>
+                <span class="text-right shrink-0 flex items-center gap-1">
+                  <span class="text-lg font-black text-frambuesa-600">{{ grupo.totalDeuda | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+                  <svg class="text-cacao-400 transition-transform" [class.rotate-180]="estaExpandido(grupo.clave)"
+                       width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </span>
+              </button>
+
+              @if (cobrandoClave() === 'g:' + grupo.clave) {
+                <ng-container *ngTemplateOutlet="metodos; context: { grupo: grupo, monto: grupo.totalDeuda }"></ng-container>
+              } @else {
+                <button (click)="abrirCobro('g:' + grupo.clave)"
+                        class="btn-primario w-full min-h-[44px] text-sm">
+                  {{ grupo.pedidos.length > 1 ? 'Cobrar todo' : 'Cobrar' }} {{ grupo.totalDeuda | currency:'CLP':'symbol-narrow':'1.0-0' }}
                 </button>
-              </div>
+              }
+            </div>
 
-            </button>
-
-            @if (grupo.expandido) {
-              <div class="bg-gray-50 p-3 border-t border-gray-100 space-y-2">
-                @for (venta of grupo.ventas; track venta.id) {
-                  
-                  <div class="flex flex-col gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                    
-                    <div class="flex items-center justify-between w-full">
-                      <div class="flex items-center gap-3 min-w-0">
-                        <span class="text-2xl shrink-0">{{ venta.producto?.icono }}</span>
-                        <div class="min-w-0">
-                          <p class="font-bold text-sm text-gray-800 truncate">{{ venta.producto?.nombre }}</p>
-                          <p class="text-[10px] text-gray-500">{{ venta.fecha | date:'mediumDate':'':'es' }}</p>
-                        </div>
-                      </div>
-                      <p class="text-sm font-black text-red-600 shrink-0 ml-2">Debe {{ (venta.precio_total - venta.valor_pagado) | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-                    </div>
-                    
-                    <div class="flex items-center justify-end gap-2 w-full mt-1">
-                      <select [(ngModel)]="venta.metodo_pago_seleccionado" class="w-auto text-[10px] bg-gray-50 border border-gray-200 text-gray-700 rounded-md py-1 px-1.5 font-bold outline-none">
-                        @for (metodo of metodosPago(); track metodo.id) { <option [value]="metodo.id">{{ metodo.nombre }}</option> }
-                      </select>
-                      <button (click)="saldarVenta(venta)" class="text-[10px] font-bold bg-green-500 text-white px-2.5 py-1 rounded-md hover:bg-green-600 uppercase tracking-wider shadow-sm shrink-0">Pagado</button>
-                    </div>
-
-                  </div>
+            @if (estaExpandido(grupo.clave)) {
+              <div class="bg-cacao-50 px-3 py-3 flex flex-col gap-2 animate-fade-in">
+                @for (pedido of grupo.pedidos; track pedido.id) {
+                  <ng-container *ngTemplateOutlet="filaPedido; context: { $implicit: pedido }"></ng-container>
                 }
               </div>
             }
-          </div>
+          </article>
+        }
+
+        <!-- VENTAS SIN CLIENTE -->
+        @if (gruposSinCliente().length > 0) {
+          <h3 class="mt-3 px-1 text-sm font-extrabold text-cacao-500">Ventas sin cliente</h3>
+          @for (grupo of gruposSinCliente(); track grupo.clave) {
+            <ng-container *ngTemplateOutlet="filaPedido; context: { $implicit: grupo.pedidos[0], tarjeta: true }"></ng-container>
+          }
         }
       </div>
     }
   </div>
 </div>
+
+<!-- Un pedido: producto, fecha, deuda, cobro rápido y acceso a editar (abonos) -->
+<ng-template #filaPedido let-pedido let-tarjeta="tarjeta">
+  <div class="p-3 flex flex-col gap-2.5" [ngClass]="tarjeta ? 'tarjeta' : 'bg-white rounded-3xl'">
+    <button (click)="editarPedido(pedido)" class="flex items-center gap-3 text-left w-full" aria-label="Editar venta (para abonos)">
+      <span class="w-10 h-10 rounded-full bg-crema flex items-center justify-center text-xl shrink-0">{{ pedido.producto?.icono || '🍰' }}</span>
+      <span class="flex-1 min-w-0">
+        <span class="block text-sm font-extrabold text-cacao-800 truncate">{{ pedido.cantidad }} × {{ pedido.producto?.nombre || 'Producto' }}</span>
+        <span class="flex items-center gap-1.5 mt-0.5">
+          <span class="text-xs font-bold text-cacao-500 first-letter:uppercase">{{ pedido.fecha | date:'EEE d MMM':'':'es' }}</span>
+          <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full" [ngClass]="claseAntiguedad(pedido.fecha)">{{ textoAntiguedad(pedido.fecha) }}</span>
+        </span>
+      </span>
+      <span class="text-right shrink-0">
+        <span class="block text-[15px] font-black text-frambuesa-600">{{ pedido.deuda | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+        @if (pedido.deuda < pedido.precio_total) {
+          <span class="block text-[11px] font-bold text-cacao-500">de {{ pedido.precio_total | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+        }
+      </span>
+    </button>
+
+    @if (cobrandoClave() === 'v:' + pedido.id) {
+      <ng-container *ngTemplateOutlet="metodos; context: { pedido: pedido, monto: pedido.deuda }"></ng-container>
+    } @else {
+      <div class="flex gap-2">
+        <button (click)="editarPedido(pedido)"
+                class="flex-1 min-h-[40px] rounded-full bg-cacao-50 text-cacao-700 text-[13px] font-extrabold hover:bg-cacao-100 active:scale-95 transition-all">
+          Abonar / editar
+        </button>
+        <button (click)="abrirCobro('v:' + pedido.id)"
+                class="flex-1 min-h-[40px] rounded-full bg-frambuesa-100 text-frambuesa-700 text-[13px] font-extrabold hover:bg-frambuesa-200 active:scale-95 transition-all">
+          Cobrar
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- Fila de métodos de pago: un toque salda la deuda completa con ese método -->
+<ng-template #metodos let-grupo="grupo" let-pedido="pedido" let-monto="monto">
+  <div class="bg-cacao-50 rounded-3xl p-2.5 flex flex-col gap-2 animate-fade-in">
+    <div class="flex items-center justify-between pl-2">
+      <span class="text-sm font-extrabold text-cacao-700">Cobrar {{ monto | currency:'CLP':'symbol-narrow':'1.0-0' }} con:</span>
+      <button (click)="cerrarCobro()" aria-label="Cancelar cobro"
+              class="w-9 h-9 rounded-full text-cacao-500 hover:bg-white flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @for (metodo of metodosPago(); track metodo.id) {
+        <button (click)="grupo ? cobrarGrupo(grupo, metodo.id) : cobrarPedido(pedido, metodo.id)" [disabled]="guardando()"
+                class="flex-1 min-w-[96px] h-11 px-3 rounded-full bg-frambuesa-600 text-white text-sm font-extrabold hover:bg-frambuesa-700 active:scale-95 transition-all disabled:opacity-50">
+          {{ metodo.nombre }}
+        </button>
+      }
+    </div>
+  </div>
+</ng-template>

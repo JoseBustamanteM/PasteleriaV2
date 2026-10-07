@@ -1,105 +1,89 @@
-<div class="p-4 pb-10">
+<div class="px-5 pt-5 pb-6 flex flex-col gap-4 animate-fade-in">
 
-  <div class="px-4 mb-6 grid grid-cols-3 gap-3">
+  <!-- ENCABEZADO -->
+  <header class="flex items-center justify-between">
+    <div>
+      <p class="text-sm font-bold text-cacao-500">{{ saludo }}</p>
+      <h1 class="text-[26px] leading-tight font-black tracking-tight text-cacao-800">Mi Pastelería</h1>
+    </div>
+    <button (click)="logout()" class="btn-icono" aria-label="Cerrar sesión" title="Cerrar sesión">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+    </button>
+  </header>
 
+  <!-- TARJETA PRINCIPAL: INGRESOS + POR COBRAR -->
+  <section class="bg-frambuesa-600 rounded-[28px] px-5 py-[18px] text-white flex flex-col gap-3.5">
+    <div class="flex flex-col gap-0.5">
+      <span class="text-[13px] font-bold text-frambuesa-100 first-letter:uppercase">Ingresos de {{ viewDate() | date:'MMMM' }}</span>
+      <span class="text-[34px] leading-none font-black tracking-tight">{{ kpis().ingresos | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+    </div>
     <button (click)="abrirCuentasPorCobrar()"
-      class="col-span-2 bg-red-50 border border-red-100 text-red-700 font-bold py-3 px-4 rounded-xl flex items-center justify-between shadow-sm active:scale-95 transition-all">
-      <div class="flex items-center gap-2">
-        <span class="text-xl">$</span>
-        <span>Cuentas</span>
-      </div>
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-    </button>
-
-    <div class="col-span-1 bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-      <span class="text-[10px] uppercase font-bold text-gray-400">Estrella</span>
-      <span class="text-xl">🏆</span>
-      <span class="text-[10px] font-bold text-gray-800 truncate w-full">{{ kpis().productoEstrella }}</span>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-2 gap-3 px-4 mb-6">
-    <div class="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-2xl shadow-lg text-white">
-      <p class="text-[10px] uppercase font-bold opacity-80">Ingresos Mes</p>
-      <h3 class="text-xl font-black mt-1">{{ kpis().ingresos | currency:'CLP':'symbol-narrow':'1.0-0' }}</h3>
-    </div>
-
-    <div class="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-2xl shadow-lg text-white">
-      <p class="text-[10px] uppercase font-bold opacity-80">Deuda Pendiente</p>
-      <h3 class="text-xl font-black mt-1">{{ kpis().deuda | currency:'CLP':'symbol-narrow':'1.0-0' }}</h3>
-    </div>
-  </div>
-
-  <div class="flex justify-between items-center mb-4 bg-nieve p-3 rounded-2xl shadow-sm border border-gray-100">
-    <button
-      class="px-3 py-1 text-gray-500 hover:text-cereza hover:bg-red-50 rounded-xl transition-colors font-medium text-sm"
-      mwlCalendarPreviousView
-      [view]="'month'"
-      [viewDate]="viewDate()"
-      (viewDateChange)="cambiarMes($event)">
-      &laquo; Anterior
-    </button>
-
-    <h3 class="font-bold text-lg text-gris-oscuro capitalize">
-      {{ viewDate() | date:'MMMM yyyy' }}
-    </h3>
-
-    <button
-      class="px-3 py-1 text-gray-500 hover:text-cereza hover:bg-red-50 rounded-xl transition-colors font-medium text-sm"
-      mwlCalendarNextView
-      [view]="'month'"
-      [viewDate]="viewDate()"
-      (viewDateChange)="cambiarMes($event)">
-      Siguiente &raquo;
-    </button>
-  </div>
-
-  <div class="bg-nieve rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1 p-2 mb-10">
-    <mwl-calendar-month-view
-      [viewDate]="viewDate()"
-      [cellTemplate]="customCellTemplate">
-    </mwl-calendar-month-view>
-  </div>
-
-  <ng-template #customCellTemplate let-day="day" let-locale="locale">
-    <div class="h-full min-h-[90px] p-1 flex flex-col items-center justify-start cursor-pointer transition-colors border-t border-gray-50 relative"
-         [ngClass]="{
-           'bg-green-100 hover:bg-green-200': getDayStatus(day.date) === 'perfect',
-           'bg-red-100 hover:bg-red-200': getDayStatus(day.date) === 'alert',
-           'bg-white hover:bg-gray-50': getDayStatus(day.date) === 'inactive',
-           'opacity-40': !day.inMonth
-         }"
-         (click)="dayClicked(day.date)">
-
-      <span class="text-sm font-semibold mt-1"
-            [ngClass]="{'text-cereza': day.isToday, 'text-gris-oscuro': !day.isToday}">
-        {{ day.date | date:'d' }}
+            class="h-12 rounded-full bg-white text-frambuesa-700 pl-[18px] pr-2 flex items-center justify-between text-sm font-extrabold active:scale-[0.98] transition-transform">
+      <span>Por cobrar: {{ kpis().deuda | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+      <span class="w-[34px] h-[34px] rounded-full bg-frambuesa-100 flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </span>
+    </button>
+  </section>
 
-      @if (getDayData(day.date); as diaData) {
-        
-        <div class="flex justify-center flex-wrap gap-0.5 mt-0.5 text-[10px] leading-none">
-          @for (icono of diaData.iconos.slice(0, 3); track $index) {
-            <span>{{ icono }}</span>
-          }
-          @if (diaData.iconos.length > 3) {
-            <span class="text-gray-500 font-bold ml-0.5">+</span>
-          }
-        </div>
+  <!-- PRODUCTO ESTRELLA -->
+  <div class="tarjeta rounded-[22px] px-3.5 py-3 flex items-center gap-3">
+    <span class="w-11 h-11 rounded-full bg-crema flex items-center justify-center text-2xl shrink-0">{{ kpis().iconoEstrella }}</span>
+    <div class="flex-1 min-w-0">
+      <p class="text-xs font-bold text-cacao-500">La estrella del mes</p>
+      <p class="text-[15px] font-extrabold text-cacao-800 truncate">{{ kpis().productoEstrella }}</p>
+    </div>
+    @if (kpis().unidadesEstrella > 0) {
+      <span class="text-sm font-black text-frambuesa-600 shrink-0">{{ kpis().unidadesEstrella }} ventas</span>
+    }
+  </div>
 
-        <div class="mt-auto flex flex-col gap-0.5 w-full pb-1 px-0.5">
-          @if (diaData.pagado > 0) {
-            <span class="text-[9px] font-black text-green-700 bg-green-200/60 rounded block text-center truncate w-full px-1 leading-tight">
-              {{ diaData.pagado | currency:'CLP':'symbol-narrow':'1.0-0' }}
-            </span>
-          }
-          @if (diaData.deuda > 0) {
-            <span class="text-[9px] font-black text-red-700 bg-red-200/60 rounded block text-center truncate w-full px-1 leading-tight">
-              {{ diaData.deuda | currency:'CLP':'symbol-narrow':'1.0-0' }}
-            </span>
-          }
-        </div>
+  <!-- CALENDARIO -->
+  <section class="tarjeta rounded-[26px] px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5">
+    <div class="flex items-center justify-between">
+      <h2 class="ml-1 text-lg font-black text-cacao-800 capitalize">{{ viewDate() | date:'MMMM yyyy' }}</h2>
+      <div class="flex gap-1">
+        <button (click)="cambiarMes(-1)" aria-label="Mes anterior"
+                class="w-11 h-11 rounded-full bg-cacao-50 text-cacao-600 flex items-center justify-center hover:bg-cacao-100 active:scale-95 transition-all">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button (click)="cambiarMes(1)" aria-label="Mes siguiente"
+                class="w-11 h-11 rounded-full bg-cacao-50 text-cacao-600 flex items-center justify-center hover:bg-cacao-100 active:scale-95 transition-all">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-7 text-center text-xs font-extrabold text-cacao-400">
+      @for (dia of diasSemana; track $index) { <span>{{ dia }}</span> }
+    </div>
+
+    <div class="grid grid-cols-7 gap-y-0.5">
+      @for (celda of celdas(); track celda.fecha.getTime()) {
+        <button (click)="dayClicked(celda.fecha)"
+                [attr.aria-label]="(celda.fecha | date:'fullDate') + (celda.estado === 'alert' ? ', con deuda' : celda.estado === 'perfect' ? ', todo pagado' : '')"
+                class="h-11 flex flex-col items-center justify-center gap-[3px] rounded-2xl hover:bg-cacao-50 transition-colors">
+          <span class="w-8 h-7 rounded-full flex items-center justify-center text-sm"
+                [ngClass]="{
+                  'bg-cacao-800 text-white font-black': celda.hoy,
+                  'font-extrabold text-cacao-800': !celda.hoy && celda.enMes,
+                  'font-semibold text-cacao-200': !celda.enMes
+                }">
+            {{ celda.numero }}
+          </span>
+          <span class="w-1.5 h-1.5 rounded-full"
+                [ngClass]="{
+                  'bg-emerald-600': celda.estado === 'perfect' && celda.enMes,
+                  'bg-frambuesa-400': celda.estado === 'alert' && celda.enMes,
+                  'bg-transparent': celda.estado === 'inactive' || !celda.enMes
+                }"></span>
+        </button>
       }
     </div>
-  </ng-template>
+
+    <div class="flex gap-4 justify-center text-xs font-bold text-cacao-600 pt-1">
+      <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>Pagado</span>
+      <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-frambuesa-400"></span>Con deuda</span>
+    </div>
+  </section>
 </div>

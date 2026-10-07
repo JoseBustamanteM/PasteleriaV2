@@ -12,7 +12,7 @@ interface ProductoPOS { id: string; nombre: string; precio_base: number; icono: 
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './pos.component.html',
-  host: { 'class': 'block h-full w-full bg-gray-50' }
+  host: { 'class': 'block min-h-full' }
 })
 export class PosComponent implements OnInit {
   private supabase = inject(SupabaseService);
@@ -55,6 +55,23 @@ export class PosComponent implements OnInit {
   formClienteId = signal<string>('');
   formEntregado = signal<boolean>(false);
   guardando = signal<boolean>(false);
+
+  // Cómo pagó el cliente: por defecto "nada", porque normalmente se paga después
+  formModoPago = signal<'nada' | 'abono' | 'todo'>('nada');
+
+  // Monto pagado real según el modo elegido
+  pagadoEfectivo = computed(() => {
+    const modo = this.formModoPago();
+    if (modo === 'todo') return this.formPrecioTotal();
+    if (modo === 'nada') return 0;
+    return Math.min(Number(this.formValorPagado()) || 0, this.formPrecioTotal());
+  });
+
+  deudaFormulario = computed(() => Math.max(0, this.formPrecioTotal() - this.pagadoEfectivo()));
+
+  // Cobro rápido desde la lista: la tarjeta de esta venta muestra los métodos de pago
+  cobrandoVentaId = signal<string | null>(null);
+  guardandoCobro = signal<boolean>(false);
 
   // NUEVO: Mini-formulario Cliente
   creandoCliente = signal<boolean>(false);
@@ -102,10 +119,14 @@ export class PosComponent implements OnInit {
         const producto = this.productos().find(p => p.id === data.producto_id);
         if (producto) {
             this.productoSeleccionado.set(producto);
-            // 2. Usamos nuestra función editarVenta existente para rellenar todo
+            // 2. Usamos el día real de la venta: si no, al guardar se movería a hoy
+            this.fechaSeleccionada.set(format(new Date(data.fecha), 'yyyy-MM-dd'));
+            // 3. Usamos nuestra función editarVenta existente para rellenar todo
             this.editarVenta(data);
-            // 3. Forzamos el paso a 'venta'
+            // 4. Forzamos el paso a 'venta'
             this.paso.set('venta');
+            // 5. Cargamos la lista del día para que "volver" muestre las ventas correctas
+            this.cargarVentasDelProducto();
         }
       }
       this.cargando.set(false);
@@ -144,10 +165,13 @@ export class PosComponent implements OnInit {
     this.formCantidad.set(1);
     this.formPrecioTotal.set(this.productoSeleccionado()!.precio_base);
     this.formValorPagado.set(0);
+    this.formModoPago.set('nada');
     this.formClienteId.set('');
     this.formEntregado.set(false);
     this.creandoCliente.set(false); // Cerramos el mini form si estaba abierto
     this.nuevoClienteNombre.set('');
+    this.clienteSeleccionado.set(null);
+    this.textoBusquedaCliente.set('');
     if (this.metodosPago().length > 0) this.formMetodoPagoId.set(this.metodosPago()[0].id);
     this.paso.set('venta');
   }
@@ -157,10 +181,18 @@ export class PosComponent implements OnInit {
     this.formCantidad.set(venta.cantidad);
     this.formPrecioTotal.set(venta.precio_total);
     this.formValorPagado.set(venta.valor_pagado);
+    // Deducimos el modo de pago a partir de los montos guardados
+    const pagado = Number(venta.valor_pagado) || 0;
+    const total = Number(venta.precio_total) || 0;
+    this.formModoPago.set(pagado <= 0 ? 'nada' : pagado >= total ? 'todo' : 'abono');
     this.formClienteId.set(venta.cliente_id || '');
-    this.formMetodoPagoId.set(venta.metodo_pago_id || '');
+    this.formMetodoPagoId.set(venta.metodo_pago_id || this.metodosPago()[0]?.id || '');
     this.formEntregado.set(venta.entregado);
     this.creandoCliente.set(false);
+    // Mostramos el cliente de la venta en el buscador
+    const cliente = this.clientes().find(c => c.id === venta.cliente_id) ?? null;
+    this.clienteSeleccionado.set(cliente);
+    this.textoBusquedaCliente.set(cliente ? cliente.nombre_completo : '');
     this.paso.set('venta');
   }
 
@@ -169,6 +201,65 @@ export class PosComponent implements OnInit {
       await this.supabase.eliminarVenta(venta.id);
       await this.cargarVentasDelProducto();
     }
+  }
+
+  // Eliminar la venta que se está editando (el botón vive dentro del formulario)
+  async eliminarVentaEnEdicion() {
+    const id = this.editandoId();
+    if (!id) return;
+    if (confirm('¿Estás seguro de eliminar esta venta permanentemente?')) {
+      await this.supabase.eliminarVenta(id);
+      await this.cargarVentasDelProducto();
+      this.volver('lista-producto');
+    }
+  }
+
+  // Iniciales para el avatar del cliente ("María González" -> "MG")
+  iniciales(nombre?: string | null): string {
+    if (!nombre) return '';
+    return nombre.trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  }
+
+  // Nombre del método de pago a partir de su ID
+  nombreMetodo(id?: string | null): string {
+    return this.metodosPago().find(m => m.id === id)?.nombre ?? '';
+  }
+
+  cambiarModoPago(modo: 'nada' | 'abono' | 'todo') {
+    // Al pasar a "Abonó" partimos con el campo vacío si antes estaba pagado completo
+    if (modo === 'abono' && this.formValorPagado() >= this.formPrecioTotal()) {
+      this.formValorPagado.set(0);
+    }
+    this.formModoPago.set(modo);
+  }
+
+  // --- COBRO RÁPIDO DESDE LA LISTA ---
+  // Un toque en "Cobrar" muestra los métodos; un toque en el método salda la venta completa.
+  // Los abonos parciales se registran editando la venta.
+
+  abrirCobro(venta: any) {
+    this.cobrandoVentaId.set(venta.id);
+  }
+
+  cerrarCobro() {
+    this.cobrandoVentaId.set(null);
+  }
+
+  async cobrarConMetodo(venta: any, metodoId: string) {
+    this.guardandoCobro.set(true);
+    const { error } = await this.supabase.actualizarVenta(venta.id, {
+      valor_pagado: venta.precio_total,
+      estado: 'Pagado',
+      metodo_pago_id: metodoId
+    });
+    this.guardandoCobro.set(false);
+
+    if (error) {
+      alert('Error al registrar el cobro: ' + error.message);
+      return;
+    }
+    this.cerrarCobro();
+    await this.cargarVentasDelProducto();
   }
 
   cambiarCantidad(delta: number) {
@@ -196,7 +287,7 @@ export class PosComponent implements OnInit {
       if (clientesRes.data) this.clientes.set(clientesRes.data);
 
       // Lo auto-seleccionamos en el formulario
-      this.formClienteId.set(data.id);
+      this.seleccionarCliente(data);
 
       // Cerramos el mini-formulario
       this.nuevoClienteNombre.set('');
@@ -208,7 +299,7 @@ export class PosComponent implements OnInit {
 async confirmarVenta() {
     this.guardando.set(true);
     const total = this.formPrecioTotal();
-    const pagado = this.formValorPagado();
+    const pagado = this.pagadoEfectivo();
     const estado = pagado < total ? 'Pendiente' : 'Pagado';
 
     // 1. Obtenemos la fecha elegida ("2026-04-27")
@@ -271,6 +362,9 @@ async confirmarVenta() {
   }
 
   async marcarComoPagado(venta: any, pagadoCompleto: boolean) {
+    // Desmarcar borra lo pagado: pedimos confirmación para evitar toques accidentales
+    if (!pagadoCompleto && !confirm('¿Marcar esta venta como NO pagada? Se borrará el monto pagado.')) return;
+
     const ventas = this.ventasDelProducto();
     const index = ventas.findIndex(v => v.id === venta.id);
 
