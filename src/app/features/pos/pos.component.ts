@@ -12,7 +12,7 @@ interface ProductoPOS { id: string; nombre: string; precio_base: number; icono: 
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './pos.component.html',
-  host: { 'class': 'block min-h-full' }
+  host: { 'class': 'flex flex-col flex-1' }
 })
 export class PosComponent implements OnInit {
   private supabase = inject(SupabaseService);
