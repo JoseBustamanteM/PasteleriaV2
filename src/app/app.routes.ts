@@ -72,4 +72,7 @@ export const routes: Routes = [
   { path: 'compras/activos', component: ActivosComponent },
   { path: 'compras/proveedores', component: ProveedoresComponent },
   { path: 'compras/historial-compras', component: NuevaCompraComponent },
+
+  // Cualquier ruta desconocida vuelve a la pantalla principal (debe ir al final)
+  { path: '**', redirectTo: 'dashboard' },
 ];
