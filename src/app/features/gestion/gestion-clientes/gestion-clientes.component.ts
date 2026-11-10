@@ -213,25 +213,37 @@ async cargarClientes() {
     this.guardarEstadoEnvio();
   }
 
-  // Arma el texto a partir de los productos marcados
+  // Arma el texto a partir de los productos marcados.
+  // Lo habitual es un solo producto por día: el mensaje pregunta solo cuántos quieren.
   generarMensaje() {
     const elegidos = this.productos().filter(p => this.productosDelDia().has(p.id));
+    // *texto* sale en negrita en WhatsApp
     const lineas = elegidos.map(p => {
       const precio = p.precio_base ? ` – $${Number(p.precio_base).toLocaleString('es-CL')}` : '';
-      return `${p.icono ?? '•'} ${p.nombre}${precio}`;
+      return `${p.icono ?? '•'} *${p.nombre}*${precio}`;
     });
-    this.mensaje.set(lineas.length
-      ? [
-          '¡Hola! Espero que estés muy bien 😊',
-          '',
-          'Te cuento lo que tengo disponible hoy:',
-          '',
-          ...lineas,
-          '',
-          'Si te gustaría reservar, respóndeme este mensaje con el producto y la cantidad, y te lo dejo apartado.',
-          '',
-          '¡Muchas gracias por tu preferencia! 🍰',
-        ].join('\n')
+
+    let cuerpo: string[] = [];
+    if (elegidos.length === 1) {
+      cuerpo = [
+        'Te cuento que hoy tengo disponible:',
+        '',
+        lineas[0],
+        '',
+        '¿Te guardo uno? Respóndeme con la cantidad que quieres y te lo dejo apartado.',
+      ];
+    } else if (elegidos.length > 1) {
+      cuerpo = [
+        'Te cuento lo que tengo disponible hoy:',
+        '',
+        ...lineas,
+        '',
+        'Respóndeme con el producto y la cantidad que quieres y te lo dejo apartado.',
+      ];
+    }
+
+    this.mensaje.set(cuerpo.length
+      ? ['¡Hola! Espero que estés muy bien 😊', '', ...cuerpo, '', '¡Muchas gracias por tu preferencia! 🍰'].join('\n')
       : '');
     this.mensajeEditado.set(false);
     this.guardarEstadoEnvio();
