@@ -201,6 +201,8 @@ async cargarClientes() {
   async cargarProductos() {
     const { data } = await this.supabase.obtenerProductosActivos();
     this.productos.set(data ?? []);
+    // Rearmamos el texto con la plantilla y precios actuales (si no fue editado a mano)
+    if (!this.mensajeEditado() && this.productosDelDia().size) this.generarMensaje();
   }
 
   toggleProducto(id: string) {
@@ -211,15 +213,37 @@ async cargarClientes() {
     this.guardarEstadoEnvio();
   }
 
-  // Arma el texto a partir de los productos marcados
+  // Arma el texto a partir de los productos marcados.
+  // Lo habitual es un solo producto por día: el mensaje pregunta solo cuántos quieren.
   generarMensaje() {
     const elegidos = this.productos().filter(p => this.productosDelDia().has(p.id));
+    // *texto* sale en negrita en WhatsApp
     const lineas = elegidos.map(p => {
       const precio = p.precio_base ? ` – $${Number(p.precio_base).toLocaleString('es-CL')}` : '';
-      return `${p.icono ?? '•'} ${p.nombre}${precio}`;
+      return `${p.icono ?? '•'} *${p.nombre}*${precio}`;
     });
-    this.mensaje.set(lineas.length
-      ? `¡Hola! 🍰 Hoy tengo a la venta:\n\n${lineas.join('\n')}\n\n¿Te guardo algo? Responde este mensaje para reservar 😊`
+
+    let cuerpo: string[] = [];
+    if (elegidos.length === 1) {
+      cuerpo = [
+        'Te cuento que hoy tengo disponible:',
+        '',
+        lineas[0],
+        '',
+        '¿Te guardo uno? Respóndeme con la cantidad que quieres y te lo dejo apartado.',
+      ];
+    } else if (elegidos.length > 1) {
+      cuerpo = [
+        'Te cuento lo que tengo disponible hoy:',
+        '',
+        ...lineas,
+        '',
+        'Respóndeme con el producto y la cantidad que quieres y te lo dejo apartado.',
+      ];
+    }
+
+    this.mensaje.set(cuerpo.length
+      ? ['¡Hola! Espero que estés muy bien 😊', '', ...cuerpo, '', 'Combustible dulce para el turno de noche 🌙⛽'].join('\n')
       : '');
     this.mensajeEditado.set(false);
     this.guardarEstadoEnvio();

@@ -141,7 +141,7 @@
     <!-- 1. Mensaje del día -->
     <section class="bg-white p-4 rounded-3xl shadow-suave border border-gray-100">
       <h2 class="font-black text-gray-800 mb-1">1. ¿Qué tienes hoy a la venta?</h2>
-      <p class="text-xs text-gray-400 mb-3">Marca los productos y se arma el mensaje solo. Puedes editarlo antes de enviar.</p>
+      <p class="text-xs text-gray-400 mb-3">Marca el producto del día (o más de uno si tienes) y el mensaje se arma solo. Puedes editarlo antes de enviar.</p>
 
       <div class="flex flex-wrap gap-2 mb-3">
         @for (p of productos(); track p.id) {
@@ -156,7 +156,7 @@
         }
       </div>
 
-      <textarea rows="7" [ngModel]="mensaje()" (ngModelChange)="editarMensaje($event)"
+      <textarea rows="11" [ngModel]="mensaje()" (ngModelChange)="editarMensaje($event)"
         placeholder="Escribe aquí el mensaje que recibirán tus clientes..."
         class="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:border-cereza focus:ring-1 focus:ring-cereza"></textarea>
       @if (mensajeEditado()) {
