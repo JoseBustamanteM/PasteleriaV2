@@ -201,6 +201,8 @@ async cargarClientes() {
   async cargarProductos() {
     const { data } = await this.supabase.obtenerProductosActivos();
     this.productos.set(data ?? []);
+    // Rearmamos el texto con la plantilla y precios actuales (si no fue editado a mano)
+    if (!this.mensajeEditado() && this.productosDelDia().size) this.generarMensaje();
   }
 
   toggleProducto(id: string) {
@@ -219,7 +221,17 @@ async cargarClientes() {
       return `${p.icono ?? '•'} ${p.nombre}${precio}`;
     });
     this.mensaje.set(lineas.length
-      ? `¡Hola! 🍰 Hoy tengo a la venta:\n\n${lineas.join('\n')}\n\n¿Te guardo algo? Responde este mensaje para reservar 😊`
+      ? [
+          '¡Hola! Espero que estés muy bien 😊',
+          '',
+          'Te cuento lo que tengo disponible hoy:',
+          '',
+          ...lineas,
+          '',
+          'Si te gustaría reservar, respóndeme este mensaje con el producto y la cantidad, y te lo dejo apartado.',
+          '',
+          '¡Muchas gracias por tu preferencia! 🍰',
+        ].join('\n')
       : '');
     this.mensajeEditado.set(false);
     this.guardarEstadoEnvio();

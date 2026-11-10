@@ -156,7 +156,7 @@
         }
       </div>
 
-      <textarea rows="7" [ngModel]="mensaje()" (ngModelChange)="editarMensaje($event)"
+      <textarea rows="11" [ngModel]="mensaje()" (ngModelChange)="editarMensaje($event)"
         placeholder="Escribe aquí el mensaje que recibirán tus clientes..."
         class="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:border-cereza focus:ring-1 focus:ring-cereza"></textarea>
       @if (mensajeEditado()) {
