@@ -14,6 +14,27 @@
     </button>
   </div>
 
+  <!-- Pestañas -->
+  <div class="bg-gray-200 p-1 rounded-2xl flex mb-4 shadow-inner">
+    <button
+      (click)="pestanaActiva.set('directorio')"
+      [class.bg-white]="pestanaActiva() === 'directorio'"
+      [class.shadow]="pestanaActiva() === 'directorio'"
+      [class.text-gray-800]="pestanaActiva() === 'directorio'"
+      class="flex-1 py-2 text-sm font-bold text-gray-500 rounded-xl transition-all">
+      👥 Directorio
+    </button>
+    <button
+      (click)="pestanaActiva.set('whatsapp')"
+      [class.bg-white]="pestanaActiva() === 'whatsapp'"
+      [class.shadow]="pestanaActiva() === 'whatsapp'"
+      [class.text-gray-800]="pestanaActiva() === 'whatsapp'"
+      class="flex-1 py-2 text-sm font-bold text-gray-500 rounded-xl transition-all">
+      💬 WhatsApp
+    </button>
+  </div>
+
+  @if (pestanaActiva() === 'directorio') {
   <!-- Controles de Filtro y Búsqueda -->
   <div class="mb-6 space-y-3">
 
@@ -111,6 +132,121 @@
       </div>
     }
   </div>
+  }
+
+  <!-- ===================== PESTAÑA WHATSAPP ===================== -->
+  @if (pestanaActiva() === 'whatsapp') {
+  <div class="space-y-5 animate-fade-in">
+
+    <!-- 1. Mensaje del día -->
+    <section class="bg-white p-4 rounded-3xl shadow-suave border border-gray-100">
+      <h2 class="font-black text-gray-800 mb-1">1. ¿Qué tienes hoy a la venta?</h2>
+      <p class="text-xs text-gray-400 mb-3">Marca los productos y se arma el mensaje solo. Puedes editarlo antes de enviar.</p>
+
+      <div class="flex flex-wrap gap-2 mb-3">
+        @for (p of productos(); track p.id) {
+          <button (click)="toggleProducto(p.id)"
+            [class.bg-cereza]="productosDelDia().has(p.id)" [class.text-white]="productosDelDia().has(p.id)"
+            [class.bg-gray-50]="!productosDelDia().has(p.id)" [class.text-gray-600]="!productosDelDia().has(p.id)"
+            class="px-3 py-1.5 rounded-full text-xs font-bold border border-gray-100 transition-all active:scale-95">
+            {{ p.icono }} {{ p.nombre }}
+          </button>
+        } @empty {
+          <p class="text-xs text-gray-400">No hay productos activos.</p>
+        }
+      </div>
+
+      <textarea rows="7" [ngModel]="mensaje()" (ngModelChange)="editarMensaje($event)"
+        placeholder="Escribe aquí el mensaje que recibirán tus clientes..."
+        class="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:border-cereza focus:ring-1 focus:ring-cereza"></textarea>
+      @if (mensajeEditado()) {
+        <button (click)="generarMensaje()" class="mt-1 text-xs font-bold text-frambuesa-600">↺ Volver a generar desde los productos</button>
+      }
+      <p class="text-[11px] text-gray-400 mt-1">El saludo "¡Hola!" se personaliza con el nombre de cada cliente.</p>
+    </section>
+
+    <!-- 2. Segmento: clientes que aceptaron recibir mensajes -->
+    <section class="bg-white p-4 rounded-3xl shadow-suave border border-gray-100">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-black text-gray-800">2. Reciben mensajes</h2>
+        <span class="text-xs font-bold text-gray-400">{{ segmento().length }} clientes</span>
+      </div>
+      @if (sinTelefonoEnSegmento() > 0) {
+        <p class="text-xs text-[#DC2626] font-bold mb-2">⚠️ {{ sinTelefonoEnSegmento() }} sin teléfono: toca el lápiz rojo para agregarlo.</p>
+      }
+
+      <div class="space-y-2 mt-2">
+        @for (cli of segmento(); track cli.id) {
+          <div class="flex items-center gap-2 p-2 rounded-2xl bg-gray-50">
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-gray-800 truncate">{{ cli.nombre_completo }}</p>
+              @if (telefonoWhatsapp(cli.telefono)) {
+                <p class="text-[11px] text-gray-400">+{{ telefonoWhatsapp(cli.telefono) }}</p>
+              } @else {
+                <p class="text-[11px] font-bold text-[#DC2626]">Sin teléfono</p>
+              }
+            </div>
+
+            <!-- Editar (rojo si falta el teléfono) -->
+            <button (click)="abrirModal(cli)" title="Editar teléfono"
+              [ngClass]="telefonoWhatsapp(cli.telefono) ? 'bg-white text-gray-400' : 'bg-[#DC2626] text-white shadow-md'"
+              class="p-2 rounded-xl transition-colors shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.89 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.89l13.416-13.416zM12 14.75l5.25-5.25" /></svg>
+            </button>
+
+            <!-- Enviar por WhatsApp -->
+            <button (click)="enviarWhatsapp(cli)" [disabled]="!enlaceWhatsapp(cli)"
+              [ngClass]="enviadosHoy().has(cli.id) ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-600 text-white'"
+              class="px-3 py-2 rounded-xl text-xs font-bold shrink-0 disabled:opacity-30 transition-all active:scale-95">
+              {{ enviadosHoy().has(cli.id) ? '✓ Enviado' : 'Enviar' }}
+            </button>
+
+            <!-- Quitar del segmento -->
+            <button (click)="cambiarSegmento(cli, false)" [disabled]="procesandoSegmento() === cli.id" title="Quitar de la lista"
+              class="p-2 text-gray-400 hover:text-red-600 rounded-xl shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        } @empty {
+          <p class="text-sm text-gray-400 text-center py-4">Aún no hay clientes. Agrégalos desde la lista de abajo 👇</p>
+        }
+      </div>
+      @if (segmento().length > 0 && !mensaje().trim()) {
+        <p class="text-[11px] text-gray-400 mt-2">Escribe o genera el mensaje para activar el botón Enviar.</p>
+      }
+    </section>
+
+    <!-- 3. Todos los clientes para agregar al segmento -->
+    <section class="bg-white p-4 rounded-3xl shadow-suave border border-gray-100">
+      <h2 class="font-black text-gray-800 mb-1">3. Agregar clientes</h2>
+      <p class="text-xs text-gray-400 mb-3">Agrega solo a quienes aceptaron recibir mensajes.</p>
+
+      <input type="text" [ngModel]="busquedaSegmento()" (ngModelChange)="busquedaSegmento.set($event)" placeholder="Buscar cliente..."
+        class="w-full p-2.5 mb-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:border-cereza focus:ring-1 focus:ring-cereza">
+
+      <div class="space-y-1.5">
+        @for (cli of clientesFueraSegmento(); track cli.id) {
+          <div class="flex items-center gap-2 p-2 rounded-2xl border border-gray-100">
+            <div class="w-8 h-8 rounded-full bg-crema flex items-center justify-center font-black text-xs text-gray-700 shrink-0">
+              {{ cli.nombre_completo.charAt(0).toUpperCase() }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-gray-800 truncate">{{ cli.nombre_completo }}</p>
+              <p class="text-[11px] text-gray-400">{{ cli.telefono || 'Sin teléfono' }}</p>
+            </div>
+            <button (click)="cambiarSegmento(cli, true)" [disabled]="procesandoSegmento() === cli.id"
+              class="px-3 py-1.5 rounded-xl bg-frambuesa-50 text-frambuesa-700 text-xs font-bold shrink-0 active:scale-95 disabled:opacity-50">
+              + Agregar
+            </button>
+          </div>
+        } @empty {
+          <p class="text-sm text-gray-400 text-center py-3">No hay más clientes para agregar.</p>
+        }
+      </div>
+    </section>
+
+  </div>
+  }
 </div>
 
 <!-- MODAL PARA CREAR/EDITAR CLIENTE -->
@@ -126,6 +262,13 @@
         <div>
           <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nombre Completo</label>
           <input type="text" [(ngModel)]="clienteActual().nombre_completo" placeholder="Ej: Juan Pérez" class="w-full p-3 border border-gray-200 rounded-2xl bg-gray-50 focus:border-cereza focus:ring-1 focus:ring-cereza outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Teléfono (WhatsApp)</label>
+          <input type="tel" inputmode="tel" [(ngModel)]="clienteActual().telefono" placeholder="Ej: 9 1234 5678" class="w-full p-3 border border-gray-200 rounded-2xl bg-gray-50 focus:border-cereza focus:ring-1 focus:ring-cereza outline-none">
+          @if (clienteActual().telefono && !telefonoWhatsapp(clienteActual().telefono)) {
+            <p class="text-[11px] text-[#DC2626] font-bold mt-1">Número incompleto: usa 9 dígitos (9 1234 5678) o con +56.</p>
+          }
         </div>
       </div>
 
