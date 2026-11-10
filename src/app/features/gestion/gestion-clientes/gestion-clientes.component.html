@@ -175,7 +175,49 @@
         <p class="text-xs text-[#DC2626] font-bold mb-2">⚠️ {{ sinTelefonoEnSegmento() }} sin teléfono: toca el lápiz rojo para agregarlo.</p>
       }
 
-      <div class="space-y-2 mt-2">
+      <!-- Enviar a todos, uno tras otro -->
+      @if (!envioEnCurso()) {
+        <button (click)="iniciarEnvioATodos()" [disabled]="!mensaje().trim() || pendientes().length === 0"
+          class="w-full mt-2 py-3 rounded-2xl bg-emerald-600 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all disabled:opacity-40">
+          📤 Enviar a todos ({{ pendientes().length }} pendientes)
+        </button>
+        @if (enviadosHoy().size > 0) {
+          <button (click)="reiniciarEnviados()" class="w-full mt-1 text-[11px] font-bold text-gray-400">
+            ↺ Reiniciar los "Enviado" de hoy
+          </button>
+        }
+      } @else {
+        <div class="sticky top-2 z-20 mt-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-md">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-emerald-800">
+              {{ segmentoConTelefono().length - pendientes().length }} de {{ segmentoConTelefono().length }} listos
+            </span>
+            <button (click)="detenerEnvio()" class="text-xs font-bold text-gray-500">Detener</button>
+          </div>
+          <div class="h-1.5 rounded-full bg-emerald-100 overflow-hidden mb-3">
+            <div class="h-full bg-emerald-600 transition-all"
+              [style.width.%]="segmentoConTelefono().length ? (segmentoConTelefono().length - pendientes().length) * 100 / segmentoConTelefono().length : 100"></div>
+          </div>
+
+          @if (siguiente(); as cli) {
+            <p class="text-[11px] text-emerald-800 mb-1">Toca "enviar" en WhatsApp, vuelve aquí y sigue con:</p>
+            <div class="flex gap-2">
+              <button (click)="enviarSiguiente()"
+                class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-extrabold text-sm active:scale-95 transition-all truncate px-2">
+                Enviar a {{ cli.nombre_completo }}
+              </button>
+              <button (click)="omitirSiguiente()" class="px-3 rounded-xl bg-white text-gray-500 text-xs font-bold border border-gray-100">
+                Omitir
+              </button>
+            </div>
+          } @else {
+            <p class="text-sm font-extrabold text-emerald-800 text-center mb-2">🎉 ¡Listo! Ya avisaste a todos.</p>
+            <button (click)="detenerEnvio()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm">Terminar</button>
+          }
+        </div>
+      }
+
+      <div class="space-y-2 mt-3">
         @for (cli of segmento(); track cli.id) {
           <div class="flex items-center gap-2 p-2 rounded-2xl bg-gray-50">
             <div class="flex-1 min-w-0">
