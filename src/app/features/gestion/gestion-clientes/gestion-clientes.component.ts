@@ -243,7 +243,7 @@ async cargarClientes() {
     }
 
     this.mensaje.set(cuerpo.length
-      ? ['¡Hola! Espero que estés muy bien 😊', '', ...cuerpo, '', '¡Que tengas un día muy dulce! 🍰'].join('\n')
+      ? ['¡Hola! Espero que estés muy bien 😊', '', ...cuerpo, '', '¡Para que el turno de noche se haga más dulce! 🌙🍰'].join('\n')
       : '');
     this.mensajeEditado.set(false);
     this.guardarEstadoEnvio();
