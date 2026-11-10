@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
+// Marca (en sessionStorage) que hay un envío de WhatsApp a medias. main.ts la lee.
+export const ENVIO_ACTIVO = 'whatsapp-envio-activo';
+
 @Component({
   selector: 'app-gestion-clientes',
   standalone: true,
@@ -58,6 +61,20 @@ export class GestionClientesComponent implements OnInit {
     this.segmento().filter(c => !this.telefonoWhatsapp(c.telefono)).length
   );
 
+  // --- ENVÍO A TODOS (uno tras otro) ---
+  envioEnCurso = signal(false);
+  omitidos = signal<Set<string>>(new Set());
+
+  // Clientes del segmento con teléfono válido
+  segmentoConTelefono = computed(() => this.segmento().filter(c => this.telefonoWhatsapp(c.telefono)));
+
+  // Los que faltan por recibir el mensaje en esta ronda
+  pendientes = computed(() =>
+    this.segmentoConTelefono().filter(c => !this.enviadosHoy().has(c.id) && !this.omitidos().has(c.id))
+  );
+
+  siguiente = computed(() => this.pendientes()[0] ?? null);
+
   // ¡LA MAGIA DE ANGULAR! Calcula la lista en tiempo real según los filtros
   clientesVisualizados = computed(() => {
     let lista = [...this.clientesBase()];
@@ -85,6 +102,7 @@ export class GestionClientesComponent implements OnInit {
   });
 
   async ngOnInit() {
+    this.restaurarEstadoEnvio();
     await Promise.all([this.cargarClientes(), this.cargarProductos()]);
   }
 
@@ -190,6 +208,7 @@ async cargarClientes() {
     if (set.has(id)) set.delete(id); else set.add(id);
     this.productosDelDia.set(set);
     if (!this.mensajeEditado()) this.generarMensaje();
+    this.guardarEstadoEnvio();
   }
 
   // Arma el texto a partir de los productos marcados
@@ -203,11 +222,13 @@ async cargarClientes() {
       ? `¡Hola! 🍰 Hoy tengo a la venta:\n\n${lineas.join('\n')}\n\n¿Te guardo algo? Responde este mensaje para reservar 😊`
       : '');
     this.mensajeEditado.set(false);
+    this.guardarEstadoEnvio();
   }
 
   editarMensaje(texto: string) {
     this.mensaje.set(texto);
     this.mensajeEditado.set(true);
+    this.guardarEstadoEnvio();
   }
 
   async cambiarSegmento(cliente: any, acepta: boolean) {
@@ -244,8 +265,91 @@ async cargarClientes() {
   enviarWhatsapp(cliente: any) {
     const url = this.enlaceWhatsapp(cliente);
     if (!url) return;
-    window.open(url, '_blank');
     this.enviadosHoy.update(s => new Set(s).add(cliente.id));
+    this.guardarEstadoEnvio();
+
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      // En el celular abrimos la app de WhatsApp directamente: no se crea una pestaña nueva
+      // por cliente y al volver quedamos en esta misma pantalla, lista para el siguiente.
+      const numero = this.telefonoWhatsapp(cliente.telefono);
+      const texto = new URL(url).searchParams.get('text') ?? '';
+      window.location.href = `whatsapp://send?phone=${numero}&text=${encodeURIComponent(texto)}`;
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  // Inicia la ronda: abre el primer chat. Al volver a la app aparece el siguiente.
+  iniciarEnvioATodos() {
+    this.omitidos.set(new Set());
+    this.envioEnCurso.set(true);
+    this.guardarEstadoEnvio();
+    this.enviarSiguiente();
+  }
+
+  enviarSiguiente() {
+    const cli = this.siguiente();
+    if (cli) this.enviarWhatsapp(cli);
+  }
+
+  omitirSiguiente() {
+    const cli = this.siguiente();
+    if (!cli) return;
+    this.omitidos.update(s => new Set(s).add(cli.id));
+    this.guardarEstadoEnvio();
+  }
+
+  detenerEnvio() {
+    this.envioEnCurso.set(false);
+    this.omitidos.set(new Set());
+    this.guardarEstadoEnvio();
+  }
+
+  // Permite volver a mandar el mensaje a todos (borra las marcas de "Enviado" de hoy)
+  reiniciarEnviados() {
+    if (!window.confirm('¿Quitar las marcas de "Enviado" de hoy para volver a enviar a todos?')) return;
+    this.enviadosHoy.set(new Set());
+    this.omitidos.set(new Set());
+    this.guardarEstadoEnvio();
+  }
+
+  // --- Persistencia local del envío del día ---
+  // Al cambiar a WhatsApp el celular puede recargar la app; guardamos el avance para no perderlo.
+  private claveEnvio() {
+    const d = new Date();
+    return `whatsapp-envio-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  }
+
+  private guardarEstadoEnvio() {
+    try {
+      localStorage.setItem(this.claveEnvio(), JSON.stringify({
+        enviados: [...this.enviadosHoy()],
+        omitidos: [...this.omitidos()],
+        productos: [...this.productosDelDia()],
+        mensaje: this.mensaje(),
+        mensajeEditado: this.mensajeEditado(),
+      }));
+      // sessionStorage sobrevive a la recarga de la pestaña: main.ts lo usa para no mandarnos al dashboard
+      if (this.envioEnCurso()) sessionStorage.setItem(ENVIO_ACTIVO, '1');
+      else sessionStorage.removeItem(ENVIO_ACTIVO);
+    } catch { /* almacenamiento no disponible: seguimos sin persistir */ }
+  }
+
+  private restaurarEstadoEnvio() {
+    try {
+      const guardado = JSON.parse(localStorage.getItem(this.claveEnvio()) ?? 'null');
+      if (guardado) {
+        this.enviadosHoy.set(new Set(guardado.enviados ?? []));
+        this.omitidos.set(new Set(guardado.omitidos ?? []));
+        this.productosDelDia.set(new Set(guardado.productos ?? []));
+        this.mensaje.set(guardado.mensaje ?? '');
+        this.mensajeEditado.set(!!guardado.mensajeEditado);
+      }
+      if (sessionStorage.getItem(ENVIO_ACTIVO) === '1') {
+        this.envioEnCurso.set(true);
+        this.pestanaActiva.set('whatsapp');
+      }
+    } catch { /* sin almacenamiento: partimos de cero */ }
   }
 
   private avisarError(error: any) {
